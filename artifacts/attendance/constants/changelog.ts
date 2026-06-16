@@ -7,6 +7,15 @@ export interface ChangelogItem {
 
 const changelog: ChangelogItem[] = [
   {
+    version: '3.6.5',
+    title: 'إصلاح الكراش الحقيقي — تكرار react-native-reanimated',
+    date: '2026-06-17',
+    items: [
+      { type: 'fix', text: '🚨 إصلاح كرash عند الإقلاع — كان react-native-reanimated يُجمَّع مرتين بسبب تضارب @types/react' },
+      { type: 'fix', text: 'إجبار @types/react على إصدار واحد (~19.1.10) عبر pnpm overrides' },
+    ],
+  },
+  {
     version: '3.6.4',
     title: 'العودة إلى آخر إصدار مستقر',
     date: '2026-06-17',
@@ -153,4 +162,4 @@ export function getLatestChangelog(): ChangelogItem | null {
   return changelog[0] ?? null;
 }
 
-export const CURRENT_VERSION = '3.6.4';
+export const CURRENT_VERSION = '3.6.5';
