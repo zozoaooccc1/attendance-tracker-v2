@@ -6,7 +6,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { useColors } from '@/hooks/useColors';
 import { AttendanceRecord, RECORD_LABELS } from '@/constants/types';
 import { getRecordById } from '@/utils/database';

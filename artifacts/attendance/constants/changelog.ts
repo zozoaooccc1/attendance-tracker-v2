@@ -7,10 +7,11 @@ export interface ChangelogItem {
 
 const changelog: ChangelogItem[] = [
   {
-    version: '3.6.0',
-    title: 'إصلاح نظام الإشعارات + المنبّه المزعج',
-    date: '2026-06-16',
+    version: '3.6.1',
+    title: 'إصلاح حفظ الصور + الإشعارات',
+    date: '2026-06-17',
     items: [
+      { type: 'fix',     text: 'إصلاح حفظ الصور — ترحيل لـ expo-file-system v19 legacy API' },
       { type: 'fix',     text: 'إصلاح الإشعارات التي لا تظهر أبداً — إعادة جدولة تلقائية عند بدء التطبيق' },
       { type: 'fix',     text: 'إصلاح مسح الإشعارات المتبادل بين الدوال' },
       { type: 'fix',     text: 'إصلاح مشكلة إذن SCHEDULE_EXACT_ALARM على Android 12+' },
@@ -158,4 +159,4 @@ export function getLatestChangelog(): ChangelogItem | null {
   return changelog[0] ?? null;
 }
 
-export const CURRENT_VERSION = '3.6.0';
+export const CURRENT_VERSION = '3.6.1';
