@@ -1,0 +1,10 @@
+node_modules/
+.expo/
+dist/
+android/
+ios/
+.tsbuildinfo
+*.keystore
+google-services.json
+*.apk
+.replit-artifact/
