@@ -7,29 +7,12 @@ export interface ChangelogItem {
 
 const changelog: ChangelogItem[] = [
   {
-    version: '3.6.3',
-    title: 'إصلاح كراش الإقلاع (الإشعارات)',
+    version: '3.6.4',
+    title: 'العودة إلى آخر إصدار مستقر',
     date: '2026-06-17',
     items: [
-      { type: 'fix',     text: '🚨 إصلاح كراش عند فتح التطبيق — إزالة كود جدولة 60 إشعار/شفت (كان يتجاوز حد Android)' },
-      { type: 'fix',     text: 'إعادة الفاصل الزمني للمنبّه إلى 30 ثانية (بدلاً من 15) — تقليل عدد الإشعارات المُجدولة' },
-      { type: 'fix',     text: 'إزالة استدعاء rescheduleFromSettings() من بدء التطبيق' },
-      { type: 'fix',     text: 'إصلاح الإشعارات التي لا تظهر أبداً' },
-    ],
-  },
-  {
-    version: '3.6.2',
-    title: 'إصلاح كراش الإقلاع',
-    date: '2026-06-17',
-    items: [
-      { type: 'fix',     text: '🚨 إصلاح كراش عند فتح التطبيق — الرجوع إلى expo-file-system v18 (v19 كان يسبب فشل تسجيل الوحدة الناتيف عند الإقلاع)' },
-      { type: 'fix',     text: 'إصلاح الإشعارات التي لا تظهر أبداً — إعادة جدولة تلقائية عند بدء التطبيق' },
-      { type: 'fix',     text: 'إصلاح مسح الإشعارات المتبادل بين الدوال' },
-      { type: 'fix',     text: 'إصلاح مشكلة إذن SCHEDULE_EXACT_ALARM على Android 12+' },
-      { type: 'new',     text: '🚨 منبّه مزعج جداً — إشعار كل 15 ثانية قبل 15 دقيقة من الدوام' },
-      { type: 'new',     text: 'رسائل إنذار متصاعدة: أخضر ← أصفر ← برتقالي ← أحمر' },
-      { type: 'new',     text: 'إشعار ثابت لا يُزال في آخر دقيقتين قبل الدوام' },
-      { type: 'improve', text: 'تخطي يوم الجمعة تلقائياً في جدولة المنبّه' },
+      { type: 'fix', text: '🚨 إصلاح الكراش — العودة إلى كود v3.5.2 (آخر إصدار مستقر قبل تعديلات الإشعارات)' },
+      { type: 'fix', text: 'تم تجاوز جميع التغييرات من fbee2e1 إلى HEAD التي كانت تسبب الكراش' },
     ],
   },
   {
@@ -170,4 +153,4 @@ export function getLatestChangelog(): ChangelogItem | null {
   return changelog[0] ?? null;
 }
 
-export const CURRENT_VERSION = '3.6.3';
+export const CURRENT_VERSION = '3.6.4';
