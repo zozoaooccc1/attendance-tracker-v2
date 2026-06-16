@@ -7,6 +7,17 @@ export interface ChangelogItem {
 
 const changelog: ChangelogItem[] = [
   {
+    version: '3.6.3',
+    title: 'إصلاح كراش الإقلاع (الإشعارات)',
+    date: '2026-06-17',
+    items: [
+      { type: 'fix',     text: '🚨 إصلاح كراش عند فتح التطبيق — إزالة كود جدولة 60 إشعار/شفت (كان يتجاوز حد Android)' },
+      { type: 'fix',     text: 'إعادة الفاصل الزمني للمنبّه إلى 30 ثانية (بدلاً من 15) — تقليل عدد الإشعارات المُجدولة' },
+      { type: 'fix',     text: 'إزالة استدعاء rescheduleFromSettings() من بدء التطبيق' },
+      { type: 'fix',     text: 'إصلاح الإشعارات التي لا تظهر أبداً' },
+    ],
+  },
+  {
     version: '3.6.2',
     title: 'إصلاح كراش الإقلاع',
     date: '2026-06-17',
@@ -159,4 +170,4 @@ export function getLatestChangelog(): ChangelogItem | null {
   return changelog[0] ?? null;
 }
 
-export const CURRENT_VERSION = '3.6.2';
+export const CURRENT_VERSION = '3.6.3';

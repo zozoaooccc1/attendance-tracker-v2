@@ -33,7 +33,7 @@ import { runDailyBackupIfNeeded, importBackupFromDownloads, restoreFromBackupDat
 import { initDatabase, getAllDates } from "@/utils/database";
 import { initFileSystem } from "@/utils/imageStorage";
 import { onAppStarting, onAppStable, clearCurrentUpdateBadFlag } from "@/utils/crashGuard";
-import { setupNotificationHandler, rescheduleFromSettings } from "@/utils/notifications";
+import { setupNotificationHandler } from "@/utils/notifications";
 import { checkForAppUpdate, type AppUpdateInfo } from "@/utils/easUpdateChecker";
 import { initOneSignal } from "@/utils/oneSignalService";
 
@@ -311,7 +311,7 @@ export default function RootLayout() {
         }
       } catch {}
 
-      // 6. Notification permissions + إعادة جدولة الإشعارات
+      // 6. Notification permissions
       if (Platform.OS !== 'web') {
         try {
           const askedNotif = await AsyncStorage.getItem('attendance_notif_asked_v1');
@@ -327,8 +327,6 @@ export default function RootLayout() {
             await Notifications.requestPermissionsAsync();
             await AsyncStorage.setItem('attendance_notif_asked_v1', '1');
           }
-          // 🔄 إعادة جدولة الإشعارات من الإعدادات المحفوظة
-          await rescheduleFromSettings();
         } catch {}
       }
 
