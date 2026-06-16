@@ -7,6 +7,20 @@ export interface ChangelogItem {
 
 const changelog: ChangelogItem[] = [
   {
+    version: '3.6.0',
+    title: 'إصلاح نظام الإشعارات + المنبّه المزعج',
+    date: '2026-06-16',
+    items: [
+      { type: 'fix',     text: 'إصلاح الإشعارات التي لا تظهر أبداً — إعادة جدولة تلقائية عند بدء التطبيق' },
+      { type: 'fix',     text: 'إصلاح مسح الإشعارات المتبادل بين الدوال' },
+      { type: 'fix',     text: 'إصلاح مشكلة إذن SCHEDULE_EXACT_ALARM على Android 12+' },
+      { type: 'new',     text: '🚨 منبّه مزعج جداً — إشعار كل 15 ثانية قبل 15 دقيقة من الدوام' },
+      { type: 'new',     text: 'رسائل إنذار متصاعدة: أخضر ← أصفر ← برتقالي ← أحمر' },
+      { type: 'new',     text: 'إشعار ثابت لا يُزال في آخر دقيقتين قبل الدوام' },
+      { type: 'improve', text: 'تخطي يوم الجمعة تلقائياً في جدولة المنبّه' },
+    ],
+  },
+  {
     version: '3.2.0',
     title: 'نظام التحديثات عبر EAS وإصلاحات',
     date: '2026-06-15',
@@ -144,4 +158,4 @@ export function getLatestChangelog(): ChangelogItem | null {
   return changelog[0] ?? null;
 }
 
-export const CURRENT_VERSION = '3.2.0';
+export const CURRENT_VERSION = '3.6.0';

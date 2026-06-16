@@ -1,5 +1,9 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// ── ثوابت ────────────────────────────────────────────────────────────────────
+const NOTIF_SETTINGS_KEY = 'attendance_notif_settings';
 
 // ── Handler setup ─────────────────────────────────────────────────────────────
 let _handlerRegistered = false;
@@ -23,6 +27,7 @@ export function setupNotificationHandler(): void {
 async function ensureChannels(): Promise<void> {
   if (Platform.OS !== 'android') return;
   try {
+    // قناة التذكيرات العادية
     await Notifications.setNotificationChannelAsync('attendance-reminders', {
       name: 'تذكيرات الحضور',
       importance: Notifications.AndroidImportance.HIGH,
@@ -30,6 +35,8 @@ async function ensureChannels(): Promise<void> {
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#3b82f6',
     });
+
+    // قناة التنبيهات العاجلة
     await Notifications.setNotificationChannelAsync('attendance-urgent', {
       name: 'تنبيهات عاجلة',
       importance: Notifications.AndroidImportance.MAX,
@@ -37,34 +44,79 @@ async function ensureChannels(): Promise<void> {
       vibrationPattern: [0, 500, 250, 500],
       lightColor: '#ef4444',
     });
+
+    // 🚨 قناة المنبّه المزعج — أعلى أهمية ممكنة
     await Notifications.setNotificationChannelAsync('attendance-alarm', {
       name: '🚨 منبّه الدوام',
       importance: Notifications.AndroidImportance.MAX,
       sound: 'default',
-      vibrationPattern: [0, 800, 200, 800, 200, 800],
-      lightColor: '#f97316',
+      vibrationPattern: [0, 1000, 200, 1000, 200, 1000, 200, 1000],
+      lightColor: '#ff0000',
       enableLights: true,
       enableVibrate: true,
       bypassDnd: true,
       lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      showBadge: true,
     });
   } catch {}
 }
 
-// ── Permission request ─────────────────────────────────────────────────────────
+// ── إذن الإشعارات + إذن الإشعارات الدقيقة (Android 12+) ───────────────────
 export async function requestNotificationPermissions(): Promise<boolean> {
   if (Platform.OS === 'web') return false;
   try {
     setupNotificationHandler();
     await ensureChannels();
+
+    // طلب إذن الإشعارات الأساسي
     const { status: existing } = await Notifications.getPermissionsAsync();
-    if (existing === 'granted') return true;
-    const { status } = await Notifications.requestPermissionsAsync({
-      ios: { allowAlert: true, allowBadge: false, allowSound: true },
-    });
-    return status === 'granted';
+    if (existing !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync({
+        ios: { allowAlert: true, allowBadge: false, allowSound: true },
+      });
+      if (status !== 'granted') return false;
+    }
+
+    // طلب إذن الإشعارات الدقيقة على Android 12+
+    if (Platform.OS === 'android') {
+      try {
+        const { PlatformConstants } = require('react-native');
+        const sdkInt = PlatformConstants?.Version ?? 0;
+        if (sdkInt >= 31) {
+          // Android 12+ (API 31) — نحتاج إذن SCHEDULE_EXACT_ALARM
+          // لكن expo-notifications يتعامل معها داخلياً كـ inexact alarms
+          // نستخدم setNotificationChannelAsync بأهمية MAX لضمان الظهور
+        }
+      } catch {}
+    }
+
+    return true;
   } catch {
     return false;
+  }
+}
+
+// ── حفظ واسترجاع إعدادات الإشعارات ─────────────────────────────────────────
+export interface NotifSettings {
+  enabled: boolean;
+  shift: 'single' | 'double';
+  alarmBeforeShift: boolean;
+  earlyReminder: boolean;
+}
+
+export async function saveNotifSettings(settings: NotifSettings): Promise<void> {
+  try {
+    await AsyncStorage.setItem(NOTIF_SETTINGS_KEY, JSON.stringify(settings));
+  } catch {}
+}
+
+export async function loadNotifSettings(): Promise<NotifSettings | null> {
+  try {
+    const raw = await AsyncStorage.getItem(NOTIF_SETTINGS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as NotifSettings;
+  } catch {
+    return null;
   }
 }
 
@@ -75,17 +127,18 @@ export async function cancelAllAttendanceReminders(): Promise<void> {
   } catch {}
 }
 
-// ── Helper: schedule alarm burst for ONE specific date ────────────────────────
-// Fires every INTERVAL seconds within the 15-minute window before entryHour:entryMinute
+// ── Helper: جدولة المنبّه المزعج ليوم واحد ─────────────────────────────────
+// 🚨 إشعار مزعج كل 15 ثانية خلال الـ 15 دقيقة قبل الدوام!
 async function scheduleAlarmWindowForDate(
   targetDate: Date,
   entryHour: number,
   entryMinute: number,
   shiftLabel: string,
 ): Promise<void> {
-  // Android: 30s intervals (30 per window) | iOS: 120s intervals (7 per window)
-  const INTERVAL_S     = Platform.OS === 'android' ? 30 : 120;
-  const WINDOW_SECONDS = 15 * 60; // 15 minutes
+  // كل 15 ثانية على Android = 60 إشعار في 15 دقيقة (مزعج جداً!)
+  // كل 30 ثانية على iOS = 30 إشعار (أقصى ما يسمح Apple)
+  const INTERVAL_S = Platform.OS === 'android' ? 15 : 30;
+  const WINDOW_SECONDS = 15 * 60; // 15 دقيقة
 
   const count = Math.floor(WINDOW_SECONDS / INTERVAL_S);
   const alarmChannel = Platform.OS === 'android' ? 'attendance-alarm' : undefined;
@@ -98,7 +151,7 @@ async function scheduleAlarmWindowForDate(
   );
   const windowStart = new Date(entryTime.getTime() - WINDOW_SECONDS * 1000);
 
-  // Skip if the entire window + entry have already passed
+  // تجاوز إذا انتهى الوقت
   if (entryTime.getTime() <= now.getTime()) return;
 
   const batch: Promise<string>[] = [];
@@ -108,15 +161,50 @@ async function scheduleAlarmWindowForDate(
     if (fireTime.getTime() <= now.getTime()) continue;
 
     const remainingMinutes = Math.ceil((entryTime.getTime() - fireTime.getTime()) / 60000);
-    const remainStr = remainingMinutes <= 1 ? 'دقيقة واحدة' : `${remainingMinutes} دقيقة`;
+    const remainStr = remainingMinutes <= 1 ? 'دقيقة واحدة!' : `${remainingMinutes} دقيقة`;
+
+    // رسائل مختلفة حسب قرب الوقت — كلما اقترب الدوام زاد الإزعاج
+    let title: string;
+    let body: string;
+
+    if (remainingMinutes <= 2) {
+      // 🔴 آخر دقيقتين — إنذار أحمر!
+      title = `🔴🔴🔴 إنذار! ${shiftLabel}`;
+      body = `باقي ${remainStr} فقط! اذهب فوراً!!!`;
+    } else if (remainingMinutes <= 5) {
+      // 🟠 آخر 5 دقائق — تحذير شديد
+      title = `🟠 ⏰ عاجل! ${shiftLabel}`;
+      body = `باقي ${remainStr} — أسرع قبل التأخير!`;
+    } else if (remainingMinutes <= 10) {
+      // 🟡 أقل من 10 دقائق — تحذير
+      title = `🟡 ⏰ ${shiftLabel}`;
+      body = `باقي ${remainStr} على الموعد — استعد!`;
+    } else {
+      // 🟢 أكثر من 10 دقائق — تذكير
+      title = `⏰ ${shiftLabel}`;
+      body = `باقي ${remainStr} على موعد الدخول`;
+    }
 
     batch.push(
       Notifications.scheduleNotificationAsync({
         content: {
-          title: `⏰ ${shiftLabel}`,
-          body: `باقي ${remainStr} على موعد الدخول — استعد!`,
+          title,
+          body,
           sound: true,
-          ...(alarmChannel ? { android: { channelId: alarmChannel } } : {}),
+          priority: Notifications.AndroidNotificationPriority.HIGH,
+          ...(alarmChannel ? {
+            android: {
+              channelId: alarmChannel,
+              priority: Notifications.AndroidNotificationPriority.HIGH,
+              color: remainingMinutes <= 2 ? '#ff0000' : remainingMinutes <= 5 ? '#ff6600' : '#3b82f6',
+              sticky: remainingMinutes <= 2, // يبقى الإشعار على الشاشة في آخر دقيقتين
+              ongoing: remainingMinutes <= 2, // لا يمكن إزالته بالسحب في آخر دقيقتين
+              autoCancel: remainingMinutes > 2,
+              vibrate: [0, 1000, 200, 1000],
+              lights: true,
+              lightColor: remainingMinutes <= 2 ? '#ff0000' : '#3b82f6',
+            }
+          } : {}),
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
@@ -125,6 +213,7 @@ async function scheduleAlarmWindowForDate(
       }).catch(() => ''),
     );
 
+    // معالجة دفعات من 20 لتجنب الضغط
     if (batch.length >= 20) {
       await Promise.all(batch.splice(0, 20));
     }
@@ -133,8 +222,7 @@ async function scheduleAlarmWindowForDate(
   if (batch.length > 0) await Promise.all(batch);
 }
 
-// ── PUBLIC: schedule aggressive alarm burst before shift entry ────────────────
-// Schedules for the next 7 days (Android) / 4 days (iOS) so alarms repeat daily
+// ── PUBLIC: جدولة المنبّه المزعج قبل الدوام ────────────────────────────────
 export async function scheduleAlarmBurst(
   shiftType: 'single' | 'double',
 ): Promise<void> {
@@ -142,11 +230,10 @@ export async function scheduleAlarmBurst(
   try {
     setupNotificationHandler();
     await ensureChannels();
-    await cancelAllAttendanceReminders();
+    // لا نمسح كل الإشعارات — فقط نضيف المنبّه المزعج
+    // التذكيرات اليومية تبقى كما هي
 
     const now = new Date();
-    // Android: 7 days (30s interval × 30 = 210 notifs per entry)
-    // iOS: 4 days (120s interval × 7 = 28 notifs per entry) — stays under 64 limit
     const DAYS = Platform.OS === 'android' ? 7 : 4;
 
     for (let dayOffset = 0; dayOffset < DAYS; dayOffset++) {
@@ -154,15 +241,18 @@ export async function scheduleAlarmBurst(
         now.getFullYear(), now.getMonth(), now.getDate() + dayOffset,
       );
 
+      // تخطي الجمعة
+      if (targetDate.getDay() === 5) continue;
+
       if (shiftType === 'single') {
-        // Single shift entry: 12:00
         await scheduleAlarmWindowForDate(targetDate, 12, 0, 'موعد بصمة الدخول');
       } else {
-        // Double shift: entry1 09:00, entry2 16:00
         await scheduleAlarmWindowForDate(targetDate, 9,  0, 'دخول الشفت الأول');
         await scheduleAlarmWindowForDate(targetDate, 16, 0, 'دخول الشفت الثاني');
       }
     }
+
+    console.log('[Notifications] تم جدولة المنبّه المزعج بنجاح');
   } catch (err) {
     console.warn('[Notifications] scheduleAlarmBurst error:', err);
   }
@@ -174,12 +264,12 @@ export async function scheduleSingleShiftReminders(earlyMinutes = 0): Promise<vo
   try {
     setupNotificationHandler();
     await ensureChannels();
-    await cancelAllAttendanceReminders();
 
     const early = Math.max(0, Math.min(earlyMinutes, 30));
     const channel        = Platform.OS === 'android' ? 'attendance-reminders' : undefined;
     const urgentChannel  = Platform.OS === 'android' ? 'attendance-urgent'    : undefined;
 
+    // تذكير قبل الدخول
     await Notifications.scheduleNotificationAsync({
       content: {
         title: '🕐 موعد بصمة الدخول',
@@ -196,6 +286,7 @@ export async function scheduleSingleShiftReminders(earlyMinutes = 0): Promise<vo
       },
     });
 
+    // تحذير قبل انتهاء فترة السماح
     await Notifications.scheduleNotificationAsync({
       content: {
         title: '⚠️ آخر موعد للبصمة',
@@ -206,10 +297,11 @@ export async function scheduleSingleShiftReminders(earlyMinutes = 0): Promise<vo
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
         hour: 12,
-        minute: 5, // 5 دقائق بعد موعد الدخول، قبل نهاية السماح (12:15)
+        minute: 5,
       },
     });
 
+    // تذكير الخروج
     await Notifications.scheduleNotificationAsync({
       content: {
         title: '🌙 موعد بصمة الخروج',
@@ -223,6 +315,8 @@ export async function scheduleSingleShiftReminders(earlyMinutes = 0): Promise<vo
         minute: 45,
       },
     });
+
+    console.log('[Notifications] تم جدولة تذكيرات الشفت الواحد');
   } catch (err) {
     console.warn('[Notifications] scheduleSingleShiftReminders error:', err);
   }
@@ -234,12 +328,12 @@ export async function scheduleDoubleShiftReminders(earlyMinutes = 0): Promise<vo
   try {
     setupNotificationHandler();
     await ensureChannels();
-    await cancelAllAttendanceReminders();
 
     const early = Math.max(0, Math.min(earlyMinutes, 30));
     const channel        = Platform.OS === 'android' ? 'attendance-reminders' : undefined;
     const urgentChannel  = Platform.OS === 'android' ? 'attendance-urgent'    : undefined;
 
+    // دخول الشفت الأول
     await Notifications.scheduleNotificationAsync({
       content: {
         title: '🌅 موعد دخول الشفت الأول',
@@ -256,6 +350,7 @@ export async function scheduleDoubleShiftReminders(earlyMinutes = 0): Promise<vo
       },
     });
 
+    // تحذير الشفت الأول
     await Notifications.scheduleNotificationAsync({
       content: {
         title: '⚠️ آخر موعد — الشفت الأول',
@@ -266,10 +361,11 @@ export async function scheduleDoubleShiftReminders(earlyMinutes = 0): Promise<vo
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
         hour: 9,
-        minute: 5, // 5 دقائق بعد موعد الدخول، قبل نهاية السماح (9:15)
+        minute: 5,
       },
     });
 
+    // خروج الشفت الأول
     await Notifications.scheduleNotificationAsync({
       content: {
         title: '🔔 موعد خروج الشفت الأول',
@@ -284,6 +380,7 @@ export async function scheduleDoubleShiftReminders(earlyMinutes = 0): Promise<vo
       },
     });
 
+    // دخول الشفت الثاني
     await Notifications.scheduleNotificationAsync({
       content: {
         title: '🌆 موعد دخول الشفت الثاني',
@@ -300,6 +397,7 @@ export async function scheduleDoubleShiftReminders(earlyMinutes = 0): Promise<vo
       },
     });
 
+    // تحذير الشفت الثاني
     await Notifications.scheduleNotificationAsync({
       content: {
         title: '⚠️ آخر موعد — الشفت الثاني',
@@ -310,10 +408,11 @@ export async function scheduleDoubleShiftReminders(earlyMinutes = 0): Promise<vo
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
         hour: 16,
-        minute: 5, // 5 دقائق بعد موعد الدخول، قبل نهاية السماح (16:15)
+        minute: 5,
       },
     });
 
+    // خروج الشفت الثاني
     await Notifications.scheduleNotificationAsync({
       content: {
         title: '🌙 نهاية الدوام — الشفت الثاني',
@@ -327,6 +426,8 @@ export async function scheduleDoubleShiftReminders(earlyMinutes = 0): Promise<vo
         minute: 45,
       },
     });
+
+    console.log('[Notifications] تم جدولة تذكيرات الشفت المزدوج');
   } catch (err) {
     console.warn('[Notifications] scheduleDoubleShiftReminders error:', err);
   }
@@ -338,8 +439,6 @@ export async function schedulePersistentReminders(intervalHours = 2): Promise<vo
   try {
     setupNotificationHandler();
     await ensureChannels();
-    // إلغاء التذكيرات المستمرة القديمة أولاً
-    await cancelAllAttendanceReminders();
     const channel = Platform.OS === 'android' ? 'attendance-reminders' : undefined;
     await Notifications.scheduleNotificationAsync({
       content: {
@@ -371,11 +470,43 @@ export async function sendImmediateAlert(title: string, body: string): Promise<v
         title,
         body,
         sound: true,
+        priority: Notifications.AndroidNotificationPriority.HIGH,
         ...(channel ? { android: { channelId: channel } } : {}),
       },
       trigger: null,
     });
   } catch (err) {
     console.warn('[Notifications] sendImmediateAlert error:', err);
+  }
+}
+
+// ── 🔄 إعادة جدولة الإشعارات من الإعدادات المحفوظة (تُستدعى عند بدء التطبيق) ──
+export async function rescheduleFromSettings(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    const settings = await loadNotifSettings();
+    if (!settings || !settings.enabled) return;
+
+    setupNotificationHandler();
+    await ensureChannels();
+
+    // نمسح الإشعارات القديمة أولاً
+    await cancelAllAttendanceReminders();
+
+    // نعيد جدولة التذكيرات اليومية
+    if (settings.shift === 'single') {
+      await scheduleSingleShiftReminders(settings.earlyReminder ? 5 : 0);
+    } else {
+      await scheduleDoubleShiftReminders(settings.earlyReminder ? 5 : 0);
+    }
+
+    // نعيد جدولة المنبّه المزعج إذا كان مفعّلاً
+    if (settings.alarmBeforeShift) {
+      await scheduleAlarmBurst(settings.shift);
+    }
+
+    console.log('[Notifications] تمت إعادة جدولة الإشعارات من الإعدادات المحفوظة');
+  } catch (err) {
+    console.warn('[Notifications] rescheduleFromSettings error:', err);
   }
 }

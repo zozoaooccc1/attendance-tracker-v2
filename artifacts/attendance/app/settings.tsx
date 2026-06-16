@@ -28,6 +28,8 @@ import {
   scheduleAlarmBurst,
   cancelAllAttendanceReminders,
   sendImmediateAlert,
+  saveNotifSettings,
+  type NotifSettings,
 } from '@/utils/notifications';
 import { ShiftType } from '@/constants/types';
 import { CURRENT_VERSION } from '@/constants/changelog';
@@ -358,17 +360,33 @@ export default function SettingsScreen() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      // حفظ الإعدادات في AsyncStorage (للشاشة) + saveNotifSettings (لإعادة الجدولة عند التشغيل)
+      const settings: NotifSettings = {
+        enabled: notifEnabled,
+        shift: notifShift,
+        alarmBeforeShift,
+        earlyReminder,
+      };
       await AsyncStorage.setItem(NOTIF_KEY, JSON.stringify({ enabled: notifEnabled, shift: notifShift }));
+      await saveNotifSettings(settings);
+
       if (notifEnabled) {
-        if (alarmBeforeShift) {
-          // المنبّه الصاخب: إشعار كل 5 ثوانٍ قبل 15 دقيقة من الدوام
-          await scheduleAlarmBurst(notifShift);
-          Alert.alert('تم حفظ الإعدادات ✅', 'المنبّه الصاخب مفعّل — سيتكرر الإشعار كل 5 ثوانٍ قبل 15 دقيقة من الدوام', [{ text: 'حسناً' }]);
+        // نمسح القديم أولاً ثم نعيد الجدولة
+        await cancelAllAttendanceReminders();
+
+        if (notifShift === 'single') {
+          await scheduleSingleShiftReminders(earlyReminder ? 5 : 0);
         } else {
-          if (notifShift === 'single') await scheduleSingleShiftReminders(earlyReminder ? 5 : 0);
-          else await scheduleDoubleShiftReminders(earlyReminder ? 5 : 0);
+          await scheduleDoubleShiftReminders(earlyReminder ? 5 : 0);
+        }
+
+        // المنبّه المزعج فوق التذكيرات
+        if (alarmBeforeShift) {
+          await scheduleAlarmBurst(notifShift);
+          Alert.alert('تم حفظ الإعدادات ✅', '🚨 المنبّه المزعج مفعّل — إشعار كل 15 ثانية قبل 15 دقيقة من الدوام!\nلا تنسَ إعطاء التطبيق إذن الإشعارات من إعدادات الهاتف.', [{ text: 'حسناً' }]);
+        } else {
           const msg = earlyReminder ? t.settings.notify5minEarly : 'التنبيهات عند موعد البصمة';
-          Alert.alert('تم حفظ الإعدادات', msg, [{ text: 'حسناً' }]);
+          Alert.alert('تم حفظ الإعدادات ✅', msg, [{ text: 'حسناً' }]);
         }
       } else {
         await cancelAllAttendanceReminders();
