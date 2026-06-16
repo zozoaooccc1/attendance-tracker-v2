@@ -1,4 +1,4 @@
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 import LZString from 'lz-string';
 import { getAllDates, getRecordsByDate, insertRecord } from './database';
 import { AttendanceRecord } from '@/constants/types';
