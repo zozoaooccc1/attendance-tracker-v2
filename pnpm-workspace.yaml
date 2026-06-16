@@ -35,6 +35,7 @@ minimumReleaseAgeExclude:
   - stripe-replit-sync
   - react-native-onesignal
   - onesignal-expo-plugin
+  - expo-file-system
 
 packages:
   - artifacts/*
@@ -162,5 +163,5 @@ overrides:
   esbuild: "0.27.3"
 
 allowBuilds:
-  dtrace-provider: set this to true or false
+  dtrace-provider: true
   esbuild: true
