@@ -59,16 +59,9 @@ function enforceSafePrimitive(v: unknown): string | number | null {
 }
 
 // Helper: sanitize params for READ operations (getAllSync, getFirstSync)
+// CRITICAL (v3.6.10): Use the same enforceSafePrimitive as safeRun
 function safeReadParams(params: unknown[]): any[] {
-  return params.map(p => {
-    if (p === null || p === undefined) return null;
-    if (typeof p === 'string') return p;
-    if (typeof p === 'number') return isFinite(p) ? p : null;
-    if (typeof p === 'boolean') return p ? 1 : 0;
-    if (p instanceof Date) return isNaN(p.getTime()) ? null : p.getTime();
-    // Convert anything else to string
-    return String(p);
-  });
+  return params.map(toSafe).map(enforceSafePrimitive);
 }
 
 // ─── TASK 1 + 3 + 4: safeRun — the mandatory call wrapper ───────────────────
@@ -237,11 +230,16 @@ export function deleteRecordsBeforeDate(beforeDateStr: string): string[] {
 
 export function getRecordsByDate(date: string): AttendanceRecord[] {
   const database = getDatabase();
-  const rows = database.getAllSync<any>(
-    `SELECT * FROM records WHERE date = ? ORDER BY createdAt ASC`,
-    safeReadParams([date])
-  );
-  return rows.map(rowToRecord);
+  try {
+    const rows = database.getAllSync<any>(
+      `SELECT * FROM records WHERE date = ? ORDER BY createdAt ASC`,
+      safeReadParams([date])
+    );
+    return rows.map(rowToRecord);
+  } catch (err) {
+    console.error('[DB:getRecordsByDate] error:', err, 'date=', date, typeof date);
+    return [];
+  }
 }
 
 export function getAllDates(): string[] {
