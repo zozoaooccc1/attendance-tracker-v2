@@ -236,19 +236,8 @@ export async function scheduleSingleShiftReminders(earlyMinutes = 0): Promise<vo
       },
     });
 
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: '⚠️ آخر موعد للبصمة',
-        body: 'الوقت ينفد — آخر 15 دقيقة قبل احتساب التأخير (12:15 م)',
-        sound: true,
-        ...(urgentChannel ? { android: { channelId: urgentChannel } } : {}),
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY,
-        hour: 12,
-        minute: 5, // 5 دقائق بعد موعد الدخول، قبل نهاية السماح (12:15)
-      },
-    });
+    // v3.7.2: تم إلغاء فترة السماح — لا حاجة لإشعار "آخر موعد للبصمة"
+    // التأخير يُحتسب فوراً عند 12:00
 
     await Notifications.scheduleNotificationAsync({
       content: {
@@ -296,19 +285,8 @@ export async function scheduleDoubleShiftReminders(earlyMinutes = 0): Promise<vo
       },
     });
 
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: '⚠️ آخر موعد — الشفت الأول',
-        body: 'آخر 15 دقيقة قبل احتساب التأخير في الشفت الأول (9:15 ص)',
-        sound: true,
-        ...(urgentChannel ? { android: { channelId: urgentChannel } } : {}),
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY,
-        hour: 9,
-        minute: 5, // 5 دقائق بعد موعد الدخول، قبل نهاية السماح (9:15)
-      },
-    });
+    // v3.7.2: تم إلغاء فترة السماح — لا حاجة لإشعار "آخر موعد للشفت الأول"
+    // التأخير يُحتسب فوراً عند 9:00
 
     await Notifications.scheduleNotificationAsync({
       content: {
@@ -340,19 +318,8 @@ export async function scheduleDoubleShiftReminders(earlyMinutes = 0): Promise<vo
       },
     });
 
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: '⚠️ آخر موعد — الشفت الثاني',
-        body: 'آخر 15 دقيقة قبل احتساب التأخير في الشفت الثاني (4:15 م)',
-        sound: true,
-        ...(urgentChannel ? { android: { channelId: urgentChannel } } : {}),
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY,
-        hour: 16,
-        minute: 5, // 5 دقائق بعد موعد الدخول، قبل نهاية السماح (16:15)
-      },
-    });
+    // v3.7.2: تم إلغاء فترة السماح — لا حاجة لإشعار "آخر موعد للشفت الثاني"
+    // التأخير يُحتسب فوراً عند 16:00
 
     await Notifications.scheduleNotificationAsync({
       content: {

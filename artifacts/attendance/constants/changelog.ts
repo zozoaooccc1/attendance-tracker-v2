@@ -192,4 +192,4 @@ export function getLatestChangelog(): ChangelogItem | null {
   return changelog[0] ?? null;
 }
 
-export const CURRENT_VERSION = '3.7.1';
+export const CURRENT_VERSION = '3.7.2';

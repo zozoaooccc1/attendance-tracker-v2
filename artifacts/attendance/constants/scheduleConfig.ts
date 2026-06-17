@@ -5,18 +5,22 @@ export interface GraceTime {
   minute: number;
 }
 
+// v3.7.2: إلغاء جميع فترات السماح في شفتات الدخول
+// السماح كان: entry1Grace = { hour: 12, minute: 15 } (15 دقيقة سماح)
+// الآن: entry1Grace = { hour: 12, minute: 0 } (بدون سماح — التأخير يُحتسب فوراً)
+
 export const REGULAR_SINGLE: { entry1Grace: GraceTime } = {
-  entry1Grace: { hour: 12, minute: 15 },
+  entry1Grace: { hour: 12, minute: 0 },
 };
 
 export const REGULAR_DOUBLE: { entry1Grace: GraceTime; entry2Grace: GraceTime } = {
-  entry1Grace: { hour: 9, minute: 15 },
-  entry2Grace: { hour: 16, minute: 15 },
+  entry1Grace: { hour: 9, minute: 0 },
+  entry2Grace: { hour: 16, minute: 0 },
 };
 
 export const FRIDAY_SCHEDULE: { entry1Grace: GraceTime; entry2Grace: GraceTime } = {
-  entry1Grace: { hour: 14, minute: 15 },
-  entry2Grace: { hour: 14, minute: 15 },
+  entry1Grace: { hour: 14, minute: 0 },
+  entry2Grace: { hour: 14, minute: 0 },
 };
 
 export function isFridayDate(date: Date): boolean {
@@ -96,20 +100,8 @@ function formatGraceTime(g: GraceTime): string {
 }
 
 export function getNextEntryGraceLabel(shiftType: ShiftType, now: Date): string {
-  const fri = isFridayDate(now);
-  if (fri) {
-    return `سماح حتى ${formatGraceTime(FRIDAY_SCHEDULE.entry1Grace)}`;
-  }
-  if (shiftType === 'single') {
-    return `سماح حتى ${formatGraceTime(REGULAR_SINGLE.entry1Grace)}`;
-  }
-  // double shift
-  const entry1 = new Date(now); entry1.setHours(9, 0, 0, 0);
-  const entry2 = new Date(now); entry2.setHours(16, 0, 0, 0);
-  if (now < entry1 || now >= entry2) {
-    return `سماح حتى ${formatGraceTime(REGULAR_DOUBLE.entry1Grace)}`;
-  }
-  return `سماح حتى ${formatGraceTime(REGULAR_DOUBLE.entry2Grace)}`;
+  // v3.7.2: لا توجد فترة سماح — التأخير يُحتسب فوراً
+  return 'بدون سماح — التأخير يُحتسب فوراً';
 }
 
 export function getExpectedExitTime(shiftType: ShiftType, now: Date): Date {
