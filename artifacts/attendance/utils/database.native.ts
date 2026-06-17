@@ -58,6 +58,19 @@ function enforceSafePrimitive(v: unknown): string | number | null {
   return String(v);
 }
 
+// Helper: sanitize params for READ operations (getAllSync, getFirstSync)
+function safeReadParams(params: unknown[]): any[] {
+  return params.map(p => {
+    if (p === null || p === undefined) return null;
+    if (typeof p === 'string') return p;
+    if (typeof p === 'number') return isFinite(p) ? p : null;
+    if (typeof p === 'boolean') return p ? 1 : 0;
+    if (p instanceof Date) return isNaN(p.getTime()) ? null : p.getTime();
+    // Convert anything else to string
+    return String(p);
+  });
+}
+
 // ─── TASK 1 + 3 + 4: safeRun — the mandatory call wrapper ───────────────────
 /**
  * MANDATORY SAFETY LAYER.
@@ -205,7 +218,7 @@ export function updateRecordNote(id: string, note: string): void {
 
 export function deleteRecordById(id: string): string | null {
   const database = getDatabase();
-  const row = database.getFirstSync<{ imagePath: string }>(`SELECT imagePath FROM records WHERE id = ?`, [id]);
+  const row = database.getFirstSync<{ imagePath: string }>(`SELECT imagePath FROM records WHERE id = ?`, safeReadParams([id]));
   if (!row) return null;
   safeRun(database, `DELETE FROM records WHERE id = ?`, [id], 'deleteRecordById');
   return row.imagePath;
@@ -214,7 +227,7 @@ export function deleteRecordById(id: string): string | null {
 export function deleteRecordsBeforeDate(beforeDateStr: string): string[] {
   const database = getDatabase();
   const rows = database.getAllSync<{ imagePath: string }>(
-    `SELECT imagePath FROM records WHERE date < ?`, [beforeDateStr]
+    `SELECT imagePath FROM records WHERE date < ?`, safeReadParams([beforeDateStr])
   );
   safeRun(database, `DELETE FROM records WHERE date < ?`, [beforeDateStr], 'deleteRecordsBeforeDate');
   return rows.map(r => r.imagePath);
@@ -226,7 +239,7 @@ export function getRecordsByDate(date: string): AttendanceRecord[] {
   const database = getDatabase();
   const rows = database.getAllSync<any>(
     `SELECT * FROM records WHERE date = ? ORDER BY createdAt ASC`,
-    [date]
+    safeReadParams([date])
   );
   return rows.map(rowToRecord);
 }
@@ -241,7 +254,7 @@ export function getAllDates(): string[] {
 
 export function getRecordById(id: string): AttendanceRecord | null {
   const database = getDatabase();
-  const row = database.getFirstSync<any>(`SELECT * FROM records WHERE id = ?`, [id]);
+  const row = database.getFirstSync<any>(`SELECT * FROM records WHERE id = ?`, safeReadParams([id]));
   if (!row) return null;
   return rowToRecord(row);
 }
@@ -251,7 +264,7 @@ export function getRecordsByMonth(year: number, month: number): AttendanceRecord
   const prefix = `${year}-${String(month).padStart(2, '0')}`;
   const rows = database.getAllSync<any>(
     `SELECT * FROM records WHERE date LIKE ? ORDER BY date ASC, createdAt ASC`,
-    [`${prefix}%`]
+    safeReadParams([`${prefix}%`])
   );
   return rows.map(rowToRecord);
 }
@@ -260,7 +273,7 @@ export function getRecordsByDateRange(startDate: string, endDate: string): Atten
   const database = getDatabase();
   const rows = database.getAllSync<any>(
     `SELECT * FROM records WHERE date >= ? AND date <= ? ORDER BY date ASC, createdAt ASC`,
-    [startDate, endDate]
+    safeReadParams([startDate, endDate])
   );
   return rows.map(rowToRecord);
 }
