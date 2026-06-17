@@ -7,6 +7,16 @@ export interface ChangelogItem {
 
 const changelog: ChangelogItem[] = [
   {
+    version: '3.6.7',
+    title: 'إصلاح حفظ الصور (الإصلاح الحقيقي)',
+    date: '2026-06-17',
+    items: [
+      { type: 'fix', text: '🚨 إصلاح حفظ الصور — ترقية expo-file-system إلى v19 واستخدام /legacy API (نفس إصلاح v3.5.6)' },
+      { type: 'fix', text: 'الإبقاء على pnpm overrides لـ @types/react — لمنع تكرار react-native-reanimated' },
+      { type: 'fix', text: 'الإبقاء على enforceSafePrimitive كشبكة أمان إضافية' },
+    ],
+  },
+  {
     version: '3.6.6',
     title: 'إصلاح حفظ الصور + إعادة المنبّه المزعج',
     date: '2026-06-17',
@@ -173,4 +183,4 @@ export function getLatestChangelog(): ChangelogItem | null {
   return changelog[0] ?? null;
 }
 
-export const CURRENT_VERSION = '3.6.6';
+export const CURRENT_VERSION = '3.6.7';

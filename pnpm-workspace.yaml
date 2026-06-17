@@ -35,6 +35,7 @@ minimumReleaseAgeExclude:
   - stripe-replit-sync
   - react-native-onesignal
   - onesignal-expo-plugin
+  - expo-file-system
 
 packages:
   - artifacts/*

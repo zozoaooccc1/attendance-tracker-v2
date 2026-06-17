@@ -1,4 +1,4 @@
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Platform } from 'react-native';
 
 // ── الحصول على مسار تخزين موثوق ──────────────────────────────────────────────
@@ -148,7 +148,7 @@ export async function getImagesStats(): Promise<{ count: number; totalMB: number
 
     for (const file of files) {
       try {
-        const info = await FileSystem.getInfoAsync(imagesDir + file, { size: true });
+        const info = await FileSystem.getInfoAsync(imagesDir + file);
         if (info.exists && 'size' in info) totalBytes += (info as any).size ?? 0;
       } catch {}
     }
@@ -175,7 +175,7 @@ export async function deleteImagesOlderThan(months: number): Promise<number> {
 
     for (const file of files) {
       try {
-        const info = await FileSystem.getInfoAsync(imagesDir + file, { size: true });
+        const info = await FileSystem.getInfoAsync(imagesDir + file);
         if (!info.exists) continue;
         // استخدم modificationTime إذا متاح، وإلا استنتج من اسم الملف
         let fileTime = 0;
