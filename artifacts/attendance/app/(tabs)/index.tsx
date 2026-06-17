@@ -340,24 +340,24 @@ export default function TodayScreen() {
           <View style={styles.scheduleBody}>
             {isFriday ? (
               <View style={styles.scheduleRow}>
-                <SchedItem label="الدخول" time="2:00 م" grace="سماح حتى 2:15 م" countdown={!hasEntry ? entryCountdown : undefined} colors={colors} isEntry styles={styles} />
+                <SchedItem label="الدخول" time="2:00 م" grace="بدون سماح" countdown={!hasEntry ? entryCountdown : undefined} colors={colors} isEntry styles={styles} />
                 <SchedItem label="الخروج" time="12:00 ص" colors={colors} styles={styles} />
               </View>
             ) : shiftType === 'single' ? (
               <View style={styles.scheduleRow}>
-                <SchedItem label="الدخول" time="12:00 م" grace="سماح حتى 12:15 م" countdown={!hasEntry ? entryCountdown : undefined} colors={colors} isEntry styles={styles} />
+                <SchedItem label="الدخول" time="12:00 م" grace="بدون سماح" countdown={!hasEntry ? entryCountdown : undefined} colors={colors} isEntry styles={styles} />
                 <SchedItem label="الخروج" time="12:00 ص" colors={colors} styles={styles} />
               </View>
             ) : (
               <View style={{ gap: moderateScale(8) }}>
                 <Text style={[styles.scheduleSubTitle, { color: colors.mutedForeground }]}>الشفت الأول</Text>
                 <View style={styles.scheduleRow}>
-                  <SchedItem label="دخول" time="9:00 ص" grace="سماح حتى 9:15 ص" countdown={!hasEntry ? entryCountdown : undefined} colors={colors} isEntry styles={styles} />
+                  <SchedItem label="دخول" time="9:00 ص" grace="بدون سماح" countdown={!hasEntry ? entryCountdown : undefined} colors={colors} isEntry styles={styles} />
                   <SchedItem label="خروج" time="12:00 م" colors={colors} styles={styles} />
                 </View>
                 <Text style={[styles.scheduleSubTitle, { color: colors.mutedForeground, marginTop: 2 }]}>الشفت الثاني</Text>
                 <View style={styles.scheduleRow}>
-                  <SchedItem label="دخول" time="4:00 م" grace="سماح حتى 4:15 م" countdown={waitingForEntry2 ? entryCountdown : undefined} colors={colors} isEntry styles={styles} />
+                  <SchedItem label="دخول" time="4:00 م" grace="بدون سماح" countdown={waitingForEntry2 ? entryCountdown : undefined} colors={colors} isEntry styles={styles} />
                   <SchedItem label="خروج" time="12:00 ص" colors={colors} styles={styles} />
                 </View>
               </View>
