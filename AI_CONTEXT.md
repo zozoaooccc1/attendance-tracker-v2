@@ -11,8 +11,8 @@
 **EAS Accounts:** kwksnc (الأصلي - استنفد حصة Free Plan) | kqmmamz (البديل - نشط)
 
 ## الإصدار الحالي
-- **version**: 3.6.8
-- **versionCode**: 73
+- **version**: 3.7.1
+- **versionCode**: 76
 - **آخر تحديث**: 2026-06-17
 - **Expo SDK**: 54
 - **React Native**: 0.81.5
@@ -68,6 +68,35 @@ attendance-v2/
 ---
 
 ## سجل الإصدارات الكامل
+
+### v3.7.1 (2026-06-17) — ✅ الإصدار النهائي العامل — إصلاح حفظ الصور نهائياً ✅
+- **🚨 السبب الحقيقي والنهائي لخطأ حفظ الصور: `null` في JavaScript له `typeof === 'object'`!**
+  - عند تمرير `null` إلى Kotlin bridge كقيمة في `Map<String, Any>`, يراه Kotlin كـ Object (وليس null)
+  - Kotlin bridge يفشل في التحويل: `Cannot convert '[object Object]' to a Kotlin type`
+  - العمود `note` كان يُمرر كـ `null` عندما لا يكتب المستخدم ملاحظة
+  - `enforceSafePrimitive(null)` كان يُرجع `null` ← `typeof null === 'object'` ← فشل!
+- **الحل النهائي**: `enforceSafePrimitive` لا تُرجع `null` أبداً
+  - `null` / `undefined` → `''` (string فارغة)
+  - `NaN` / `Infinity` → `0` (number)
+  - أي كائن → `String(v)`
+- **النتيجة**: التطبيق يعمل بنجاح، حفظ الصور يعمل بدون أخطاء
+
+### v3.7.0 (2026-06-17) — إصلاح خطأ القراءة (READ operations) ⚠️
+- **اكتشاف**: الخطأ قد يكون من عمليات القراءة (SELECT) وليس الكتابة (INSERT)
+  - بعد نجاح `insertRecord`, تُستدعى `loadTodayRecords()` → `getRecordsByDate()` → `getAllSync()`
+  - `getAllSync` تستدعي `runSync` داخلياً لكن بدون `safeRun`!
+- **الإصلاح**: إضافة `safeReadParams()` لتعقيم params في عمليات القراءة
+  - تطبيق `toSafe` + `enforceSafePrimitive` على جميع عمليات `getAllSync` و `getFirstSync`
+- **ملاحظة**: لم يحل المشكلة وحده — السبب الحقيقي اكتُشف في v3.7.1
+
+### v3.6.10 (2026-06-17) — إضافة try/catch لعمليات القراءة ⚠️
+- **إضافة `try/catch` حول `getRecordsByDate`** لمنع انتشار الخطأ
+- **تسجيل الخطأ** مع قيمة `date` ونوعها للتشخيص
+- **ملاحظة**: لم يحل المشكلة وحده — السبب الحقيقي اكتُشف في v3.7.1
+
+### v3.6.9 (2026-06-17) — رسالة خطأ تفصيلية ⚠️
+- **عرض رسالة خطأ تفصيلية** تحتوي على النص الكامل للخطأ
+- **ملاحظة**: لم يحل المشكلة — ساعد في تشخيص السبب الحقيقي
 
 ### v3.6.8 (2026-06-17) — إصلاح قاطع لحفظ الصور + سجلات تشخيص ✅
 - **إصلاح قاطع: تحويل صريح لكل الحقول إلى String() في capture.tsx**
@@ -265,7 +294,11 @@ attendance-v2/
 ## Version Bumps
 | الإصدار | versionCode | التاريخ | الحساب |
 |---------|-------------|---------|--------|
-| v3.6.8 | 73 | 2026-06-17 | kqmmamz |
+| v3.7.1 | 76 | 2026-06-17 | kqmmamz |
+| v3.7.0 | 75 | 2026-06-17 | kqmmamz |
+| v3.6.10 | 75 | 2026-06-17 | kqmmamz |
+| v3.6.9 | 74 | 2026-06-17 | kqmmamz |
+| v3.6.8 | 73 | 2026-06-17 | kwksnc |
 | v3.6.7 | 72 | 2026-06-17 | kqmmamz |
 | v3.6.6 | 71 | 2026-06-17 | kwksnc |
 | v3.6.5 | 70 | 2026-06-17 | kwksnc |
@@ -320,6 +353,101 @@ attendance-v2/
 - `enforceSafePrimitive()`: يحوّل أي قيمة غير primitive إلى String()
 - `capture.tsx`: تحويل صريح لكل حقل قبل `addRecord`
 - `safeRun()`: سجلات تشخيص + فحص نهائي + تحويل قسري لأي كائن متبقي
+
+### 🚨🚨🚨 ملاحظة شديدة جداً — السبب الحقيقي والنهائي لخطأ حفظ الصور (v3.7.1) 🚨🚨🚨
+
+> **⚠️ تحذير لأي ذكاء اصطناعي أو مطور يقرأ هذا:**
+> **هذا هو السبب الحقيقي لخطأ "Cannot convert '[object Object]' to a Kotlin type" الذي استمر عبر 7 إصدارات (v3.6.6 → v3.7.0) قبل اكتشافه في v3.7.1. اقرأ هذا القسم بعناية فائقة قبل محاولة إصلاح أي خطأ مشابه.**
+
+#### الخطأ الذي ظهر للمستخدم:
+```
+Cannot convert '[object Object]' to a Kotlin [runSync]: .type
+```
+ثم تطور إلى:
+```
+Error: حدث خطأ في التزامن: [runSync] Cannot convert '[object Object]' to a Kotlin type.
+```
+
+#### السبب الجذري (السبب الحقيقي!):
+**في JavaScript، `typeof null === 'object'` (هذا سلوك معروف في JS منذ الإصدار الأول!)**
+
+عندما يُمرر `null` إلى **Kotlin bridge** في expo-sqlite كقيمة في `Map<String, Any>`:
+1. JavaScript يضع `null` في الـ Map
+2. Kotlin bridge يحاول تحويل القيمة
+3. `typeof null === 'object'` → Kotlin يراه كـ **Object** (وليس كـ null!)
+4. **فشل التحويل!** → `Cannot convert '[object Object]' to a Kotlin type`
+
+#### السيناريو الذي سبب المشكلة:
+```typescript
+// في capture.tsx، عند حفظ سجل بدون ملاحظة:
+addRecord({
+  ...
+  note: note.trim() || '',  // إذا كان note فارغاً، يصبح ''
+});
+
+// في database.native.ts:
+function insertRecord(record: AttendanceRecord): void {
+  safeRun(database, `INSERT INTO records (..., note) VALUES (..., ?)`, [
+    ...,
+    record.note || null,  // ← إذا كان '' (falsy)، يصبح null!
+  ]);
+}
+
+// في safeRun:
+const safe = params.map(toSafe).map(enforceSafePrimitive);
+// toSafe(null) → null
+// enforceSafePrimitive(null) → null  ← المشكلة هنا!
+// typeof null === 'object' ← Kotlin bridge يفشل!
+```
+
+#### لماذا فشلت جميع المحاولات السابقة؟
+
+| الإصدار | المحاولة | لماذا فشلت |
+|---------|----------|------------|
+| v3.6.6 | `enforceSafePrimitive()` | كان يُرجع `null` ← `typeof null === 'object'` |
+| v3.6.7 | `expo-file-system` v19 + `/legacy` | لم يكن له علاقة بالخطأ (الخطأ من SQLite وليس FileSystem) |
+| v3.6.8 | `String()` في `capture.tsx` | حوّل الحقول لـ string، لكن `note` لا يزال يصبح `null` عبر `\|\| null` |
+| v3.7.0 | `safeReadParams` للقراءة | عالج عمليات SELECT، لكن الخطأ كان من INSERT |
+| v3.6.10 | `try/catch` في `getRecordsByDate` | منع الكراش لكن لم يحل السبب الجذري |
+
+#### الحل النهائي (v3.7.1):
+```typescript
+// قبل (يسبب الخطأ):
+function enforceSafePrimitive(v: unknown): string | number | null {
+  if (v === null || v === undefined) return null;  // ← typeof null === 'object'!
+  ...
+}
+
+// بعد (الحل النهائي):
+function enforceSafePrimitive(v: unknown): string | number {
+  // 🚨 لا تُرجع null أبداً! null في JS له typeof === 'object'
+  // مما يسبب "Cannot convert Object to Kotlin type" في expo-sqlite
+  if (v === null || v === undefined) return '';  // ← string فارغة بدلاً من null
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number') return isFinite(v) ? v : 0;
+  return String(v);
+}
+```
+
+#### الدروس المستفادة (مهمة لأي مطور Expo/React Native):
+1. **`typeof null === 'object'` في JavaScript** — هذا سلوك تاريخي معروف لكن خطير
+2. **Kotlin bridge في expo-sqlite** لا يتعامل بشكل صحيح مع `null` في `Map<String, Any>`
+3. **عند تمرير params إلى `database.runSync()`**, لا تمرر `null` أبداً — استخدم `''` للنصوص و `0` للأرقام
+4. **عامل الشك دائماً**: إذا استمر خطأ رغم الإصلاحات الظاهرية، ابحث عن `null`!
+5. **`record.note || null`** تعبير خطر — إذا كان `note` فارغاً، يصبح `null` الذي يسبب الكراش
+
+#### ملفات حساسة تحتاج انتباه:
+- `artifacts/attendance/utils/database.native.ts` — `safeRun`, `enforceSafePrimitive`, `safeReadParams`
+- `artifacts/attendance/app/capture.tsx` — `handleConfirm` حيث يُنشأ السجل
+- `artifacts/attendance/context/AttendanceContext.tsx` — `addRecord` الذي يستدعي `insertRecord`
+
+#### اختبار التشخيص:
+```javascript
+// إذا رأيت هذا الخطأ، اختبر فوراً:
+console.log(typeof null);  // 'object' ← هذا هو السبب!
+console.log(null instanceof Object);  // false
+// الحل: لا تمرر null إلى database.runSync()
+```
 
 ### 🔴 تجاوز حد Android للإشعارات (v3.6.0 → v3.6.6)
 **المشكلة**: كود `scheduleAlarmBurst` كان يجدول 60 إشعاراً لكل شفت (فاصل 15 ثانية × 15 دقيقة)
