@@ -194,12 +194,33 @@ export default function CaptureScreen() {
 
       const finalTime = officialTime.displayTime;
 
+      // CRITICAL FIX (v3.6.8): Force-convert all fields to safe primitives
+      // to prevent "Cannot convert Object to Kotlin runSync" error
+      const safeId = String(id || '');
+      const safeDate = String(officialTime.displayDate || '');
+      const safeType = String(resolvedType || 'entry1');
+      const safeShift = String(resolvedShift || 'single');
+      const safeImagePath = String(savedPath || '');
+      const safeOcrTime = officialTime.displayTime ? String(officialTime.displayTime) : null;
+      const safeConfirmedTime = String(finalTime || '');
+      const safeCreatedAt = typeof officialTime.time === 'object' && officialTime.time instanceof Date
+        ? officialTime.time.getTime()
+        : (typeof officialTime.time === 'number' ? officialTime.time : Date.now());
+      const safeNote = note && note.trim() ? String(note.trim()) : '';
+
       addRecord({
-        id, date: officialTime.displayDate, type: resolvedType, shiftType: resolvedShift,
-        imagePath: savedPath, ocrTime: officialTime.displayTime, ocrConfidence: 100,
-        confirmedTime: finalTime, isManuallyEdited: false,
-        isSynced: officialTime.isSynced, createdAt: officialTime.time instanceof Date ? officialTime.time.getTime() : Number(officialTime.time),
-        note: note.trim() || '',
+        id: safeId,
+        date: safeDate,
+        type: safeType as RecordType,
+        shiftType: safeShift as ShiftType,
+        imagePath: safeImagePath,
+        ocrTime: safeOcrTime,
+        ocrConfidence: 100,
+        confirmedTime: safeConfirmedTime,
+        isManuallyEdited: false,
+        isSynced: officialTime.isSynced === true,
+        createdAt: safeCreatedAt,
+        note: safeNote,
       });
 
       const isEntry = (type as string) === 'entry1' || (type as string) === 'entry2';

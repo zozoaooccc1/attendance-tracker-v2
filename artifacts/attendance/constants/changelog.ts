@@ -7,6 +7,15 @@ export interface ChangelogItem {
 
 const changelog: ChangelogItem[] = [
   {
+    version: '3.6.8',
+    title: 'إصلاح حفظ الصور — تحديد السبب',
+    date: '2026-06-17',
+    items: [
+      { type: 'fix', text: '🚨 إصلاح قاطع: تحويل صريح لكل الحقول إلى string في capture.tsx' },
+      { type: 'improve', text: 'إضافة سجلات تشخيص تفصيلية في safeRun لتحديد السبب' },
+    ],
+  },
+  {
     version: '3.6.7',
     title: 'إصلاح حفظ الصور (الإصلاح الحقيقي)',
     date: '2026-06-17',
@@ -183,4 +192,4 @@ export function getLatestChangelog(): ChangelogItem | null {
   return changelog[0] ?? null;
 }
 
-export const CURRENT_VERSION = '3.6.7';
+export const CURRENT_VERSION = '3.6.8';

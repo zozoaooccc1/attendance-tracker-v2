@@ -73,6 +73,22 @@ function safeRun(
   params: unknown[],
   caller = 'unknown'
 ): void {
+  // CRITICAL DEBUG (v3.6.8): Log every param's actual type and value
+  // to identify which one is causing the "Cannot convert Object to Kotlin runSync" error
+  const paramDebug = params.map((p, i) => {
+    if (p === null) return `[${i}]=null`;
+    if (p === undefined) return `[${i}]=undefined`;
+    const t = typeof p;
+    if (t === 'object') {
+      if (p instanceof Date) return `[${i}]=Date(${p.getTime()})`;
+      if (Array.isArray(p)) return `[${i}]=Array(len=${p.length})`;
+      try { return `[${i}]=Object(${JSON.stringify(p).slice(0, 80)})`; }
+      catch { return `[${i}]=Object(?)`; }
+    }
+    return `[${i}]=${t}(${String(p).slice(0, 50)})`;
+  });
+  console.log(`[DB:safeRun][${caller}] params: ${paramDebug.join(' | ')}`);
+
   const hasUnsafe = params.some(
     p => p !== null && p !== undefined && typeof p === 'object' && !(p instanceof Date)
   );
@@ -82,12 +98,34 @@ function safeRun(
     dbLog('info', caller, params);
   }
 
+  // Apply sanitization and enforce primitives
   const safe = params.map(toSafe).map(enforceSafePrimitive);
+
+  // CRITICAL DEBUG: Log the sanitized values too
+  const safeDebug = safe.map((p, i) => {
+    if (p === null) return `[${i}]=null`;
+    const t = typeof p;
+    return `[${i}]=${t}(${String(p).slice(0, 50)})`;
+  });
+  console.log(`[DB:safeRun][${caller}] SAFE: ${safeDebug.join(' | ')}`);
+
+  // FINAL GUARANTEE: If any value is still not a primitive, throw with details
+  for (let i = 0; i < safe.length; i++) {
+    const v = safe[i];
+    if (v !== null && typeof v !== 'string' && typeof v !== 'number') {
+      const errMsg = `[DB:safeRun][${caller}] CRITICAL: param[${i}] is still an object after sanitization! type=${typeof v}, value=${String(v).slice(0, 100)}`;
+      console.error(errMsg);
+      // Force-convert to string as last resort
+      safe[i] = String(v);
+    }
+  }
 
   try {
     database.runSync(sql, safe as SQLite.SQLiteBindParams);
   } catch (err) {
-    console.error(`[DB:safeRun][${caller}] runSync error after sanitization:`, err);
+    console.error(`[DB:safeRun][${caller}] runSync error:`, err);
+    console.error(`[DB:safeRun][${caller}] SQL: ${sql}`);
+    console.error(`[DB:safeRun][${caller}] Final params: ${safeDebug.join(' | ')}`);
     throw err;
   }
 }
