@@ -238,7 +238,7 @@ export default function CaptureScreen() {
     } catch (err) {
       // v3.6.9: تفصيل الخطأ لمعرفة السبب الحقيقي
       const errMsg = err instanceof Error ? err.message : String(err);
-      const errorDetails = `الرسالة: ${errMsg}\n\nالنوع: ${resolvedType}\nالشفت: ${resolvedShift}\nالوقت: ${finalTime}\nمسار الصورة: ${savedPath?.slice(0, 50)}\ncreatedAt: ${typeof officialTime.time}`;
+      const errorDetails = `Error: ${errMsg}`;
       Alert.alert('خطأ في الحفظ', errorDetails);
       setSaving(false);
     }
