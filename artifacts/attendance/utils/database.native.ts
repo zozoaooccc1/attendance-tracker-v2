@@ -22,6 +22,12 @@ function dbLog(level: 'info' | 'warn', caller: string, params: unknown[]): void 
  * The Kotlin bridge accepts ONLY: string | number | null.
  * Objects, booleans, undefined, NaN, Infinity, Date, and Arrays are all
  * transformed here — never passed raw.
+ *
+ * CRITICAL FIX (v3.6.6): The final `enforceSafePrimitive` check guarantees
+ * that NO object ever reaches `runSync`. If for any reason an object slips
+ * through (e.g., a Proxy, a class instance, or a NaN edge case), it gets
+ * coerced to a string. This prevents the Kotlin bridge crash:
+ *   "Cannot convert '[object Object]' to a Kotlin runSync"
  */
 function toSafe(v: unknown): string | number | null {
   if (v === null || v === undefined) return null;
@@ -30,7 +36,26 @@ function toSafe(v: unknown): string | number | null {
   if (typeof v === 'string') return v;
   if (v instanceof Date) return isNaN(v.getTime()) ? null : v.getTime();
   if (Array.isArray(v)) return v.length > 0 ? toSafe(v[0]) : null;
-  try { return JSON.stringify(v); } catch { return null; }
+  // Last resort: stringify anything else
+  try {
+    const s = JSON.stringify(v);
+    return s === undefined ? null : s;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * FINAL SAFETY NET. Ensures the value is exactly one of: string | number | null.
+ * If anything else slips through, it is coerced to a string.
+ * This is the GUARANTEE that no object reaches the Kotlin bridge.
+ */
+function enforceSafePrimitive(v: unknown): string | number | null {
+  if (v === null || v === undefined) return null;
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number') return isFinite(v) ? v : null;
+  // Coerce anything unexpected to string — never pass an object to runSync
+  return String(v);
 }
 
 // ─── TASK 1 + 3 + 4: safeRun — the mandatory call wrapper ───────────────────
@@ -57,7 +82,7 @@ function safeRun(
     dbLog('info', caller, params);
   }
 
-  const safe = params.map(toSafe);
+  const safe = params.map(toSafe).map(enforceSafePrimitive);
 
   try {
     database.runSync(sql, safe as SQLite.SQLiteBindParams);

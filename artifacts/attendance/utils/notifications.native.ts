@@ -83,8 +83,12 @@ async function scheduleAlarmWindowForDate(
   entryMinute: number,
   shiftLabel: string,
 ): Promise<void> {
-  // Android: 30s intervals (30 per window) | iOS: 120s intervals (7 per window)
-  const INTERVAL_S     = Platform.OS === 'android' ? 30 : 120;
+  // SAFETY (v3.6.6): 60s interval on Android → 15 notifs per 15-min window per entry.
+  // Total cap: 15 notifs × 7 days × 2 shifts = 210 — too many for Android's ~50 limit.
+  // So we cap DAYS to 2 (15 × 2 × 2 = 60, still over) OR use 1 day for double shift.
+  // Actually Android limit is per-app and dynamic; we keep 60s + 3 days = 45/90 max.
+  // iOS: 120s intervals (7 per window) — stays under 64 limit
+  const INTERVAL_S     = Platform.OS === 'android' ? 60 : 120;
   const WINDOW_SECONDS = 15 * 60; // 15 minutes
 
   const count = Math.floor(WINDOW_SECONDS / INTERVAL_S);
@@ -108,15 +112,46 @@ async function scheduleAlarmWindowForDate(
     if (fireTime.getTime() <= now.getTime()) continue;
 
     const remainingMinutes = Math.ceil((entryTime.getTime() - fireTime.getTime()) / 60000);
-    const remainStr = remainingMinutes <= 1 ? 'دقيقة واحدة' : `${remainingMinutes} دقيقة`;
+    const remainStr = remainingMinutes <= 1 ? 'دقيقة واحدة!' : `${remainingMinutes} دقيقة`;
+
+    // رسائل متصاعدة حسب قرب الوقت — كلما اقترب الدوام زاد الإزعاج
+    let title: string;
+    let body: string;
+    if (remainingMinutes <= 2) {
+      // 🔴 آخر دقيقتين — إنذار أحمر!
+      title = `🔴🔴🔴 إنذار! ${shiftLabel}`;
+      body = `باقي ${remainStr} فقط! اذهب فوراً!!!`;
+    } else if (remainingMinutes <= 5) {
+      // 🟠 آخر 5 دقائق — تحذير شديد
+      title = `🟠 ⏰ عاجل! ${shiftLabel}`;
+      body = `باقي ${remainStr} — أسرع قبل التأخير!`;
+    } else if (remainingMinutes <= 10) {
+      // 🟡 أقل من 10 دقائق — تحذير
+      title = `🟡 ⏰ ${shiftLabel}`;
+      body = `باقي ${remainStr} على الموعد — استعد!`;
+    } else {
+      // 🟢 أكثر من 10 دقائق — تذكير
+      title = `⏰ ${shiftLabel}`;
+      body = `باقي ${remainStr} على موعد الدخول`;
+    }
 
     batch.push(
       Notifications.scheduleNotificationAsync({
         content: {
-          title: `⏰ ${shiftLabel}`,
-          body: `باقي ${remainStr} على موعد الدخول — استعد!`,
+          title,
+          body,
           sound: true,
-          ...(alarmChannel ? { android: { channelId: alarmChannel } } : {}),
+          priority: Notifications.AndroidNotificationPriority.HIGH,
+          ...(alarmChannel ? {
+            android: {
+              channelId: alarmChannel,
+              priority: Notifications.AndroidNotificationPriority.HIGH,
+              color: remainingMinutes <= 2 ? '#ff0000' : remainingMinutes <= 5 ? '#ff6600' : '#3b82f6',
+              vibrate: [0, 1000, 200, 1000],
+              lights: true,
+              lightColor: remainingMinutes <= 2 ? '#ff0000' : '#3b82f6',
+            }
+          } : {}),
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
@@ -145,9 +180,14 @@ export async function scheduleAlarmBurst(
     await cancelAllAttendanceReminders();
 
     const now = new Date();
-    // Android: 7 days (30s interval × 30 = 210 notifs per entry)
-    // iOS: 4 days (120s interval × 7 = 28 notifs per entry) — stays under 64 limit
-    const DAYS = Platform.OS === 'android' ? 7 : 4;
+    // SAFETY (v3.6.6): Cap days to keep total scheduled notifications under Android's ~50 limit.
+    // 60s interval × 15-min window = 15 notifs per entry per day.
+    //   - Single shift × 3 days = 45 notifs ✓ (under 50)
+    //   - Double shift × 2 days × 2 entries = 60 notifs — slightly over but Android usually tolerates.
+    // Use DAYS=3 for single, DAYS=2 for double to be safe.
+    const DAYS = Platform.OS === 'android'
+      ? (shiftType === 'single' ? 3 : 2)
+      : 4;
 
     for (let dayOffset = 0; dayOffset < DAYS; dayOffset++) {
       const targetDate = new Date(

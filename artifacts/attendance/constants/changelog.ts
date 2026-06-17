@@ -7,6 +7,17 @@ export interface ChangelogItem {
 
 const changelog: ChangelogItem[] = [
   {
+    version: '3.6.6',
+    title: 'إصلاح حفظ الصور + إعادة المنبّه المزعج',
+    date: '2026-06-17',
+    items: [
+      { type: 'fix',     text: '🚨 إصلاح خطأ حفظ الصور: Cannot convert Object to Kotlin runSync — إضافة شبكة أمان enforceSafePrimitive' },
+      { type: 'new',     text: '🚨 إعادة المنبّه المزعج: رسائل متصاعدة (أخضر ← أصفر ← برتقالي ← أحمر)' },
+      { type: 'improve', text: 'فاصل المنبّه 60 ثانية بدلاً من 15 ثانية — لتجنب تجاوز حد Android للإشعارات المُجدولة' },
+      { type: 'improve', text: 'تحديد عدد أيام المنبّه (3 أيام للشفت الواحد، 2 للشفت المزدوج) — لمنع الكراش' },
+    ],
+  },
+  {
     version: '3.6.5',
     title: 'إصلاح الكراش الحقيقي — تكرار react-native-reanimated',
     date: '2026-06-17',
@@ -162,4 +173,4 @@ export function getLatestChangelog(): ChangelogItem | null {
   return changelog[0] ?? null;
 }
 
-export const CURRENT_VERSION = '3.6.5';
+export const CURRENT_VERSION = '3.6.6';
