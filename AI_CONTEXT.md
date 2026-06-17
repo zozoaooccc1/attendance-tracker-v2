@@ -6,13 +6,14 @@
 
 **GitHub V2:** https://github.com/zozoaooccc1/attendance-tracker-v2  
 **GitHub القديم:** https://github.com/zozoaooccc1/attendance-extractor  
-**EAS Project ID:** 644aed4d-a65e-4116-add6-212d873b08d8  
-**EAS Account:** kwksnc
+**EAS Project ID (kwksnc):** 644aed4d-a65e-4116-add6-212d873b08d8  
+**EAS Project ID (kqmmamz):** 2208687b-d9b1-4b4a-b818-e43ac1867c56  
+**EAS Accounts:** kwksnc (الأصلي - استنفد حصة Free Plan) | kqmmamz (البديل - نشط)
 
 ## الإصدار الحالي
-- **version**: 3.5.6
-- **versionCode**: 64
-- **آخر تحديث**: 2026-06-16
+- **version**: 3.6.8
+- **versionCode**: 73
+- **آخر تحديث**: 2026-06-17
 - **Expo SDK**: 54
 - **React Native**: 0.81.5
 - **New Architecture**: مفعّلة (مطلوبة لـ react-native-reanimated v4)
@@ -67,6 +68,83 @@ attendance-v2/
 ---
 
 ## سجل الإصدارات الكامل
+
+### v3.6.8 (2026-06-17) — إصلاح قاطع لحفظ الصور + سجلات تشخيص ✅
+- **إصلاح قاطع: تحويل صريح لكل الحقول إلى String() في capture.tsx**
+  - safeId, safeDate, safeType, safeShift, safeImagePath
+  - safeOcrTime, safeConfirmedTime, safeCreatedAt, safeNote
+  - يضمن عدم وصول أي كائن إلى database.runSync()
+- **إضافة سجلات تشخيص تفصيلية في safeRun**
+  - تسجيل نوع وقيمة كل param قبل وبعد التنظيف
+  - فحص نهائي: تحويل أي كائن متبقي إلى String()
+  - تسجيل SQL والparams عند حدوث خطأ
+
+### v3.6.7 (2026-06-17) — إصلاح حفظ الصور الحقيقي (نفس إصلاح v3.5.6) ✅
+- **ترقية expo-file-system من ~18.1.2 إلى ~19.0.0**
+- **تغيير 7 استيرادات إلى 'expo-file-system/legacy'** (نفس إصلاح v3.5.6):
+  - imageStorage.native.ts, backup.native.ts, capture.tsx, settings.tsx, reports.tsx, record-detail.tsx, AppUpdateModal.tsx
+- **إضافة expo-file-system لـ minimumReleaseAgeExclude** في pnpm-workspace.yaml
+- **الإبقاء على pnpm overrides** لـ @types/react@~19.1.10 (يمنع تكرار reanimated)
+- **الإبقاء على enforceSafePrimitive** كشبكة أمان إضافية
+- **نقل المشروع إلى حساب kqmmamz** ( projectId: 2208687b-d9b1-4b4a-b818-e43ac1867c56)
+  - السبب: حساب kwksnc استنفد حصة Free Plan للبناء
+
+### v3.6.6 (2026-06-17) — إصلاح حفظ الصور + إعادة المنبّه المزعج ✅
+- **إصلاح خطأ حفظ الصور (Cannot convert Object to Kotlin runSync)**
+  - إضافة enforceSafePrimitive() كشبكة أمان نهائية
+  - أي قيمة ليست string/number/null تُحوّل إلى String()
+- **إعادة ميزة المنبّه المزعج بشكل آمن**
+  - فاصل 60 ثانية بدلاً من 15 ثانية (15 إشعار بدلاً من 60 لكل نافذة)
+  - تحديد عدد الأيام: 3 للشفت الواحد، 2 للشفت المزدوج
+  - الحد الأقصى للإشعارات المُجدولة: 45 (single) أو 60 (double) — ضمن حد Android
+  - رسائل متصاعدة: أخضر ← أصفر ← برتقالي ← أحمر
+- **الحفاظ على إصلاح الكراش**: pnpm overrides لـ @types/react لا يزال فعالاً
+
+### v3.6.5 (2026-06-17) — إصلاح الكراش الحقيقي — تكرار react-native-reanimated ✅
+- **السبب الجذري للكراش عند الإقلاع**
+  - @types/react مُثبّت بإصدارين مختلفين (19.1.17 و 19.2.14)
+  - هذا يجعل pnpm يثبّت react-native-reanimated مرتين
+  - Metro يجمّع النسختين في الـ bundle → 2x حجم الـ Animated API
+  - التطبيق يكرش عند تحميل الـ JS bundle (بعد شعار التطبيق)
+- **السبب في وجود إصدارين من @types/react**
+  - mockup-sandbox (web dev tool) يستخدم @radix-ui الذي يتطلب @types/react ^19.2.2
+  - attendance package يستخدم @types/react ~19.1.10
+- **الإصلاح**: إضافة pnpm overrides لإجبار @types/react@~19.1.10 على مستوى الـ workspace
+- **النتيجة**: إصدار واحد فقط من react-native-reanimated، حجم الـ bundle عاد طبيعياً (3.35MB)
+
+### v3.6.4 (2026-06-16) — العودة إلى كود v3.5.2 (آخر إصدار مستقر) ✅
+- **العودة الكاملة إلى commit 5461eee** (v3.5.2 - آخر حالة مستقرة معروفة)
+- **تجاوز جميع التغييرات من fbee2e1 إلى HEAD** (إشعارات + expo-file-system v19 + pnpm fixes)
+- **تحديث الإصدار إلى 3.6.4 + versionCode 69**
+- **إصلاح dtrace-provider** في pnpm-workspace.yaml (true بدلاً من placeholder)
+
+### v3.6.3 (2026-06-16) — محاولة إصلاح كراش الإقلاع (إزالة كود الإشعارات) ⚠️
+- **إعادة notifications.native.ts إلى إصدار 5461eee** (قبل fbee2e1)
+- **إعادة _layout.tsx لإزالة rescheduleFromSettings()**
+- **إعادة settings.tsx للإصدار السابق**
+- **ملاحظة**: لم يحل المشكلة — السبب الحقيقي كان تكرار reanimated (اكتُشف في v3.6.5)
+
+### v3.6.2 (2026-06-16) — الرجوع إلى expo-file-system v18 ⚠️
+- **تخفيض expo-file-system من ~19.0.0 إلى ~18.1.2**
+- **إعادة 7 ملفات لاستيراد 'expo-file-system'** (بدون /legacy)
+- **إزالة expo-file-system من minimumReleaseAgeExclude**
+- **ملاحظة**: لم يحل المشكلة — كان التراجع غير صحيح، v19 هو الصحيح (اكتُشف في v3.6.7)
+
+### v3.6.1 (2026-06-16) — تحديث expo-file-system v19 مع استيراد legacy ⚠️
+- **تحديث expo-file-system من ~18.1.2 إلى ~19.0.0**
+- **تحديث 7 ملفات لاستخدام استيراد legacy**
+- **تحديث app.json: version=3.6.1, versionCode=66**
+- **إصلاح pnpm**: إضافة expo-file-system للاستثناءات + تفعيل dtrace-provider
+- **ملاحظة**: البناء فشل في البداية بسبب مشاكل pnpm، ثم نجح لكن التطبيق كان يكرش
+
+### v3.6.0 (2026-06-16) — إصلاح نظام الإشعارات + المنبّه المزعج ⚠️
+- **إصلاح الإشعارات التي لا تظهر** — إعادة جدولة تلقائية عند بدء التطبيق
+- **إصلاح مسح الإشعارات المتبادل بين الدوال**
+- **🚨 منبّه مزعج جداً**: إشعار كل 15 ثانية قبل 15 دقيقة من الدوام
+- **رسائل إنذار متصاعدة**: أخضر ← أصفر ← برتقالي ← أحمر
+- **إشعار ثابت لا يُزال** في آخر دقيقتين
+- **تخطي الجمعة تلقائياً**
+- **ملاحظة**: هذا الإصدار تسبب في كراش الإقلاع بسبب تجاوز حد Android للإشعارات المُجدولة
 
 ### v3.5.6 (2026-06-16) — إصلاح حفظ الصور ✅
 - **إصلاح خطأ "لا يمكن الوصول إلى نظام الملفات (FileSystem)" عند حفظ الصور**
@@ -185,26 +263,74 @@ attendance-v2/
 ---
 
 ## Version Bumps
-| الإصدار | versionCode | التاريخ |
-|---------|-------------|---------|
-| v3.5.6 | 64 | 2026-06-16 |
-| v3.5.5 | 63 | 2026-06-16 |
-| v3.5.4 | 62 | 2026-06-16 |
-| v3.2.0 | — | 2026-06-15 |
-| v3.1.8 | — | 2026-06-15 |
-| v3.1.5 | 37 | 2026-06-13 |
-| v3.1.4 | 36 | 2026-06-13 |
-| v3.1.3 | 35 | 2026-06-12 |
-| v3.1.2 | — | 2026-06-12 |
-| v3.1.1 | — | 2026-06-12 |
-| v3.1.0 | — | 2026-06-12 |
-| v3.0.0 | — | 2026-06-12 |
-| v2.8.0 | — | 2026-06-11 |
-| v2.7.0 | — | 2026-06-11 |
+| الإصدار | versionCode | التاريخ | الحساب |
+|---------|-------------|---------|--------|
+| v3.6.8 | 73 | 2026-06-17 | kqmmamz |
+| v3.6.7 | 72 | 2026-06-17 | kqmmamz |
+| v3.6.6 | 71 | 2026-06-17 | kwksnc |
+| v3.6.5 | 70 | 2026-06-17 | kwksnc |
+| v3.6.4 | 69 | 2026-06-16 | kwksnc |
+| v3.6.3 | 68 | 2026-06-16 | kwksnc |
+| v3.6.2 | 67 | 2026-06-16 | kwksnc |
+| v3.6.1 | 66 | 2026-06-16 | kwksnc |
+| v3.6.0 | 65 | 2026-06-16 | kwksnc |
+| v3.5.6 | 64 | 2026-06-16 | kwksnc |
+| v3.5.5 | 63 | 2026-06-16 | kwksnc |
+| v3.5.4 | 62 | 2026-06-16 | kwksnc |
+| v3.2.0 | — | 2026-06-15 | kwksnc |
+| v3.1.8 | — | 2026-06-15 | kwksnc |
+| v3.1.5 | 37 | 2026-06-13 | kwksnc |
+| v3.1.4 | 36 | 2026-06-13 | kwksnc |
+| v3.1.3 | 35 | 2026-06-12 | kwksnc |
+| v3.1.2 | — | 2026-06-12 | kwksnc |
+| v3.1.1 | — | 2026-06-12 | kwksnc |
+| v3.1.0 | — | 2026-06-12 | kwksnc |
+| v3.0.0 | — | 2026-06-12 | kwksnc |
+| v2.8.0 | — | 2026-06-11 | kwksnc |
+| v2.7.0 | — | 2026-06-11 | kwksnc |
 
 ---
 
 ## الإصلاحات الحرجة بالتفصيل
+
+### 🔴 تكرار react-native-reanimated (v3.6.5) — سبب الكراش عند الإقلاع
+**السبب الحقيقي لكراش التطبيق عند فتحه (شعار التطبيق يظهر ثم يكرش)**
+- `@types/react` كان مُثبّتاً بإصدارين مختلفين:
+  - 19.1.17 (لـ attendance package)
+  - 19.2.14 (لـ mockup-sandbox عبر @radix-ui)
+- هذا جعل pnpm يثبّت `react-native-reanimated@4.1.7` **مرتين**
+- Metro يجمّع النسختين في الـ bundle → 2x حجم الـ Animated API
+- عدد دوال `__makeNative`: 164 بدلاً من 82 (الطبيعي)
+- حجم الـ bundle: 3.97MB بدلاً من 3.35MB (+622KB)
+- **الحل**: إضافة `pnpm overrides` لإجبار `@types/react@~19.1.10` على مستوى الـ workspace كله
+- **النتيجة**: إصدار واحد فقط من reanimated، حجم الـ bundle عاد لـ 3.35MB
+
+### 🔴 خطأ حفظ الصور (v3.6.7 + v3.6.8) — Cannot convert Object to Kotlin runSync
+**رسالة الخطأ**: `Cannot convert '[object Object]' to a Kotlin [runSync]: .type`
+
+**المشكلة**: عند حفظ صورة، يفشل `database.runSync()` لأن أحد البارامترات كائن وليس primitive
+
+**المحاولات**:
+1. **v3.6.6**: إضافة `enforceSafePrimitive()` كشبكة أمان — لم تحل المشكلة
+2. **v3.6.7**: ترقية `expo-file-system` إلى v19 + استخدام `/legacy` (نفس إصلاح v3.5.6) — لم تحل المشكلة
+3. **v3.6.8**: تحويل صريح لكل الحقول إلى `String()` في `capture.tsx` + سجلات تشخيص تفصيلية
+
+**الحلول المطبقة**:
+- `toSafe()`: يحوّل الكائنات إلى JSON strings
+- `enforceSafePrimitive()`: يحوّل أي قيمة غير primitive إلى String()
+- `capture.tsx`: تحويل صريح لكل حقل قبل `addRecord`
+- `safeRun()`: سجلات تشخيص + فحص نهائي + تحويل قسري لأي كائن متبقي
+
+### 🔴 تجاوز حد Android للإشعارات (v3.6.0 → v3.6.6)
+**المشكلة**: كود `scheduleAlarmBurst` كان يجدول 60 إشعاراً لكل شفت (فاصل 15 ثانية × 15 دقيقة)
+- لـ 7 أيام × 2 شفت = 840 إشعار مُجدول
+- Android limit ≈ 50 إشعار مُجدول لكل تطبيق
+- تجاوز الحد → كراش عند `scheduleNotificationAsync`
+
+**الحل في v3.6.6**:
+- فاصل 60 ثانية بدلاً من 15 (15 إشعار لكل نافذة بدلاً من 60)
+- أيام محدودة: 3 للشفت الواحد، 2 للشفت المزدوج
+- الحد الأقصى: 45 (single) أو 60 (double) — ضمن/قريب من حد Android
 
 ### 🔴 كراش @babel/traverse (v3.5.5)
 **السبب الحقيقي لكراش التطبيق عند بدء التشغيل**
@@ -237,6 +363,52 @@ attendance-v2/
 | `attendance-upload.keystore` | مفتاح توقيع Android | ✅ من .gitignore |
 | `google-services.json` | إعدادات Firebase/OneSignal | ✅ من .gitignore |
 | `eas.json` | إعدادات EAS + EXPO_TOKEN | ❌ مطلوب للبناء |
+
+---
+
+## التكوينات المهمة (pnpm-workspace.yaml)
+
+### pnpm overrides (مهم لمنع تكرار reanimated)
+```yaml
+overrides:
+  # Force a single @types/react version across the workspace to prevent
+  # duplicate react-native-reanimated installations (which cause crashes at startup)
+  "@types/react": "~19.1.10"
+  "@types/react-dom": "~19.1.7"
+```
+
+### minimumReleaseAgeExclude (مهم لتثبيت expo-file-system v19)
+```yaml
+minimumReleaseAgeExclude:
+  - '@replit/*'
+  - stripe-replit-sync
+  - react-native-onesignal
+  - onesignal-expo-plugin
+  - expo-file-system  # مهم: v19 قد تكون أحدث من 24 ساعة
+```
+
+### allowBuilds (مهم لـ dtrace-provider)
+```yaml
+allowBuilds:
+  dtrace-provider: true  # يجب أن يكون true، ليس placeholder
+  esbuild: true
+```
+
+---
+
+## الاعتمادات الحرجة (Critical Dependencies)
+
+| الحزمة | الإصدار | ملاحظات |
+|--------|---------|---------|
+| `expo` | ~54.0.27 | SDK 54 |
+| `expo-file-system` | ~19.0.0 | **يجب استخدام `/legacy` API** |
+| `react-native-reanimated` | ~4.1.1 | يتطلب New Architecture |
+| `@types/react` | ~19.1.10 | **يجب توحيده عبر pnpm overrides** |
+| `expo-sqlite` | ~15.1.2 | يستخدم runSync — يحتاج safeRun |
+| `react-native-onesignal` | 5.5.1 | يتطلب تهيئة آمنة |
+| `@babel/traverse` | ^7.25.2 | مطلوب لـ Metro Bundler |
+
+---
 
 ---
 
