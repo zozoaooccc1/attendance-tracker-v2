@@ -50,10 +50,13 @@ function toSafe(v: unknown): string | number | null {
  * If anything else slips through, it is coerced to a string.
  * This is the GUARANTEE that no object reaches the Kotlin bridge.
  */
-function enforceSafePrimitive(v: unknown): string | number | null {
-  if (v === null || v === undefined) return null;
+function enforceSafePrimitive(v: unknown): string | number {
+  // CRITICAL (v3.7.1): Never return null! null has typeof 'object' in JS
+  // which can cause "Cannot convert Object to Kotlin type" error.
+  // Convert null/undefined to empty string instead.
+  if (v === null || v === undefined) return '';
   if (typeof v === 'string') return v;
-  if (typeof v === 'number') return isFinite(v) ? v : null;
+  if (typeof v === 'number') return isFinite(v) ? v : 0;
   // Coerce anything unexpected to string — never pass an object to runSync
   return String(v);
 }
