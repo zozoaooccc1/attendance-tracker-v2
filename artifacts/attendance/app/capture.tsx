@@ -236,7 +236,10 @@ export default function CaptureScreen() {
       }
       showSuccessAndNavigate();
     } catch (err) {
-      Alert.alert(t.error, err instanceof Error ? err.message : t.capture.saveError);
+      // v3.6.9: تفصيل الخطأ لمعرفة السبب الحقيقي
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const errorDetails = `الرسالة: ${errMsg}\n\nالنوع: ${resolvedType}\nالشفت: ${resolvedShift}\nالوقت: ${finalTime}\nمسار الصورة: ${savedPath?.slice(0, 50)}\ncreatedAt: ${typeof officialTime.time}`;
+      Alert.alert('خطأ في الحفظ', errorDetails);
       setSaving(false);
     }
   };
