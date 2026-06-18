@@ -7,6 +7,61 @@ export interface ChangelogItem {
 
 const changelog: ChangelogItem[] = [
   {
+    version: '3.7.6',
+    title: 'إصلاح التنبيهات + إعادة جدولة تلقائية',
+    date: '2026-06-18',
+    items: [
+      { type: 'fix',     text: '🚨 إصلاح: التنبيهات لم تكن تُعيد الجدولة عند بدء التطبيق' },
+      { type: 'fix',     text: '🚨 إصلاح: رسالة التنبيه كانت تقول 5 ثوانٍ بدل 30 ثانية' },
+      { type: 'fix',     text: '🚨 إصلاح: changelog كان يعرض v3.6.8 بدل الإصدار الحالي' },
+      { type: 'new',     text: '✅ rescheduleFromSettings: إعادة جدولة تلقائية عند بدء التطبيق' },
+    ],
+  },
+  {
+    version: '3.7.5',
+    title: 'المنبّه المزعج القوي + اختيار الشفت',
+    date: '2026-06-18',
+    items: [
+      { type: 'new',     text: '🚨 المنبّه المزعج: كل 30 ثانية قبل 15 دقيقة من الدوام' },
+      { type: 'new',     text: '✅ اختيار الشفت: الأول فقط / الثاني فقط / كلاهما' },
+      { type: 'fix',     text: 'حفظ اختيار الشفت في AsyncStorage (لا يُفقد عند إعادة التشغيل)' },
+      { type: 'improve', text: 'اهتزاز أقوى في آخر دقيقتين + إشعار لاصق لا يُزال' },
+    ],
+  },
+  {
+    version: '3.7.3',
+    title: 'إزالة فترة السماح من الواجهة',
+    date: '2026-06-17',
+    items: [
+      { type: 'fix', text: 'تحديث نص "سماح حتى 12:15" إلى "بدون سماح" في الواجهة' },
+    ],
+  },
+  {
+    version: '3.7.2',
+    title: 'إلغاء جميع فترات السماح',
+    date: '2026-06-17',
+    items: [
+      { type: 'fix', text: '🚨 إلغاء جميع فترات السماح — التأخير يُحتسب فوراً عند موعد الدخول' },
+    ],
+  },
+  {
+    version: '3.7.1',
+    title: 'إصلاح حفظ الصور نهائياً',
+    date: '2026-06-17',
+    items: [
+      { type: 'fix', text: '🚨 إصلاح: typeof null === object في JavaScript يسبب خطأ Kotlin' },
+      { type: 'fix', text: 'enforceSafePrimitive لا تُرجع null أبداً — تحوّله إلى string فارغ' },
+    ],
+  },
+  {
+    version: '3.7.0',
+    title: 'إصلاح خطأ القراءة (READ)',
+    date: '2026-06-17',
+    items: [
+      { type: 'fix', text: 'إضافة safeReadParams لعمليات القراءة في قاعدة البيانات' },
+    ],
+  },
+  {
     version: '3.6.8',
     title: 'إصلاح حفظ الصور — تحديد السبب',
     date: '2026-06-17',
@@ -192,4 +247,4 @@ export function getLatestChangelog(): ChangelogItem | null {
   return changelog[0] ?? null;
 }
 
-export const CURRENT_VERSION = '3.7.5';
+export const CURRENT_VERSION = '3.7.6';

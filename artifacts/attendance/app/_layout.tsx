@@ -33,7 +33,7 @@ import { runDailyBackupIfNeeded, importBackupFromDownloads, restoreFromBackupDat
 import { initDatabase, getAllDates } from "@/utils/database";
 import { initFileSystem } from "@/utils/imageStorage";
 import { onAppStarting, onAppStable, clearCurrentUpdateBadFlag } from "@/utils/crashGuard";
-import { setupNotificationHandler } from "@/utils/notifications";
+import { setupNotificationHandler, rescheduleFromSettings } from "@/utils/notifications";
 import { checkForAppUpdate, type AppUpdateInfo } from "@/utils/easUpdateChecker";
 import { initOneSignal } from "@/utils/oneSignalService";
 
@@ -327,6 +327,8 @@ export default function RootLayout() {
             await Notifications.requestPermissionsAsync();
             await AsyncStorage.setItem('attendance_notif_asked_v1', '1');
           }
+          // v3.7.6: إعادة جدولة التنبيهات بالإعدادات المحفوظة
+          try { await rescheduleFromSettings(); } catch {}
         } catch {}
       }
 

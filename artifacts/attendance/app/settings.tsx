@@ -363,9 +363,10 @@ export default function SettingsScreen() {
       await AsyncStorage.setItem(NOTIF_KEY, JSON.stringify({ enabled: notifEnabled, shift: notifShift, alarmEntry: alarmEntry }));
       if (notifEnabled) {
         if (alarmBeforeShift) {
-          // المنبّه الصاخب: إشعار كل 5 ثوانٍ قبل 15 دقيقة من الدوام
+          // v3.7.6: المنبّه المزعج — كل 30 ثانية قبل 15 دقيقة من الدوام
           await scheduleAlarmBurst(notifShift, notifShift === 'double' ? alarmEntry : 'both');
-          Alert.alert('تم حفظ الإعدادات ✅', 'المنبّه الصاخب مفعّل — سيتكرر الإشعار كل 5 ثوانٍ قبل 15 دقيقة من الدوام', [{ text: 'حسناً' }]);
+          const entryLabel = notifShift === 'double' ? (alarmEntry === 'entry1' ? 'للشفت الأول' : alarmEntry === 'entry2' ? 'للشفت الثاني' : 'لكلا الشفتين') : '';
+          Alert.alert('تم حفظ الإعدادات ✅', `المنبّه المزعج مفعّل ${entryLabel} — سيتكرر كل 30 ثانية قبل 15 دقيقة من الدوام`, [{ text: 'حسناً' }]);
         } else {
           if (notifShift === 'single') await scheduleSingleShiftReminders(earlyReminder ? 5 : 0);
           else await scheduleDoubleShiftReminders(earlyReminder ? 5 : 0);
@@ -589,7 +590,8 @@ export default function SettingsScreen() {
                 <Ionicons name="warning-outline" size={moderateScale(16)} color="#ef4444" style={{ marginTop: 1 }} />
                 <Text style={[styles.rowSub, { color: '#ef4444', flex: 1, lineHeight: moderateScale(18) }]}>
                   سيُرسل منبّه مزعج جداً كل 30 ثانية طوال 15 دقيقة قبل موعد الدخول.{'\n'}
-                  لا يمكن إيقافه إلا من هذه الإعدادات.
+                  لا يمكن إيقافه إلا من هذه الإعدادات.{'\n'}
+                  {'⚠️ للشفتين: اختر الشفت أدناه لتجنب الإزعاج للشفت الآخر'}
                 </Text>
               </View>
             )}

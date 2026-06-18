@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ── Handler setup ─────────────────────────────────────────────────────────────
 let _handlerRegistered = false;
@@ -396,5 +397,38 @@ export async function sendImmediateAlert(title: string, body: string): Promise<v
     });
   } catch (err) {
     console.warn('[Notifications] sendImmediateAlert error:', err);
+  }
+}
+
+// ── 🔄 إعادة جدولة التنبيهات من الإعدادات المحفوظة (تُستدعى عند بدء التطبيق) ──
+// v3.7.6: إعادة آمنة — داخل try/catch لمنع الكراش
+export async function rescheduleFromSettings(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    // قراءة الإعدادات المحفوظة
+    const raw = await AsyncStorage.getItem('attendance_notif_settings_v2');
+    if (!raw) return;
+    const settings = JSON.parse(raw);
+    if (!settings || !settings.enabled) return;
+
+    setupNotificationHandler();
+    await ensureChannels();
+    await cancelAllAttendanceReminders();
+
+    // إعادة جدولة التذكيرات أو المنبّه المزعج
+    if (settings.alarmBeforeShift) {
+      const alarmEntry = settings.alarmEntry || 'both';
+      await scheduleAlarmBurst(settings.shift || 'single', alarmEntry);
+    } else {
+      if (settings.shift === 'single') {
+        await scheduleSingleShiftReminders(settings.earlyReminder ? 5 : 0);
+      } else {
+        await scheduleDoubleShiftReminders(settings.earlyReminder ? 5 : 0);
+      }
+    }
+
+    console.log('[Notifications] تمت إعادة جدولة التنبيهات من الإعدادات المحفوظة');
+  } catch (err) {
+    console.warn('[Notifications] rescheduleFromSettings error:', err);
   }
 }
