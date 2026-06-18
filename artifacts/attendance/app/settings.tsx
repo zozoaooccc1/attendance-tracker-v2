@@ -602,34 +602,46 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        {/* اختيار الشفت للمنبّه — يظهر دائماً عند تفعيل المنبّه */}
+        {/* اختيار الشفت للمنبّه — يظهر دائماً عند تفعيل المنبّه، مستقل عن الصفحة الرئيسية */}
         {alarmBeforeShift && (
           <View style={[{ marginHorizontal: moderateScale(14), marginBottom: moderateScale(10) }]}>
-            <Text style={[styles.rowSub, { color: colors.mutedForeground, marginBottom: moderateScale(6) }]}>
-              {notifShift === 'double' ? 'المنبّه للشفت:' : 'المنبّه للدخول:'}
-            </Text>
-            {notifShift === 'double' ? (
-              <View style={{ flexDirection: 'row', gap: moderateScale(6) }}>
-                <TouchableOpacity
-                  onPress={() => setAlarmEntry('entry1')}
-                  style={{ flex: 1, paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center', backgroundColor: alarmEntry === 'entry1' ? '#ef4444' : colors.muted + '30' }}>
-                  <Text style={{ color: alarmEntry === 'entry1' ? '#fff' : colors.mutedForeground, fontSize: moderateScale(12), fontWeight: '700' }}>الأول فقط</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setAlarmEntry('entry2')}
-                  style={{ flex: 1, paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center', backgroundColor: alarmEntry === 'entry2' ? '#ef4444' : colors.muted + '30' }}>
-                  <Text style={{ color: alarmEntry === 'entry2' ? '#fff' : colors.mutedForeground, fontSize: moderateScale(12), fontWeight: '700' }}>الثاني فقط</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setAlarmEntry('both')}
-                  style={{ flex: 1, paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center', backgroundColor: alarmEntry === 'both' ? '#ef4444' : colors.muted + '30' }}>
-                  <Text style={{ color: alarmEntry === 'both' ? '#fff' : colors.mutedForeground, fontSize: moderateScale(12), fontWeight: '700' }}>كلاهما</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={{ backgroundColor: colors.muted + '20', paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center' }}>
-                <Text style={{ color: colors.mutedForeground, fontSize: moderateScale(12) }}>شفت واحد — المنبّه يعمل للدخول فقط</Text>
-              </View>
+            {/* اختيار نوع الدوام للتنبيهات */}
+            <Text style={[styles.rowSub, { color: colors.mutedForeground, marginBottom: moderateScale(6) }]}>نوع الدوام للتنبيهات:</Text>
+            <View style={{ flexDirection: 'row', gap: moderateScale(6), marginBottom: moderateScale(10) }}>
+              <TouchableOpacity
+                onPress={() => setNotifShift('single')}
+                style={{ flex: 1, paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center', backgroundColor: notifShift === 'single' ? '#ef4444' : colors.muted + '30' }}>
+                <Text style={{ color: notifShift === 'single' ? '#fff' : colors.mutedForeground, fontSize: moderateScale(12), fontWeight: '700' }}>شفت واحد</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setNotifShift('double')}
+                style={{ flex: 1, paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center', backgroundColor: notifShift === 'double' ? '#ef4444' : colors.muted + '30' }}>
+                <Text style={{ color: notifShift === 'double' ? '#fff' : colors.mutedForeground, fontSize: moderateScale(12), fontWeight: '700' }}>شفتين</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* اختيار الشفت للمنبّه — يظهر فقط للشفتين */}
+            {notifShift === 'double' && (
+              <>
+                <Text style={[styles.rowSub, { color: colors.mutedForeground, marginBottom: moderateScale(6) }]}>المنبّه للشفت:</Text>
+                <View style={{ flexDirection: 'row', gap: moderateScale(6) }}>
+                  <TouchableOpacity
+                    onPress={() => setAlarmEntry('entry1')}
+                    style={{ flex: 1, paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center', backgroundColor: alarmEntry === 'entry1' ? '#ef4444' : colors.muted + '30' }}>
+                    <Text style={{ color: alarmEntry === 'entry1' ? '#fff' : colors.mutedForeground, fontSize: moderateScale(12), fontWeight: '700' }}>الأول فقط</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setAlarmEntry('entry2')}
+                    style={{ flex: 1, paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center', backgroundColor: alarmEntry === 'entry2' ? '#ef4444' : colors.muted + '30' }}>
+                    <Text style={{ color: alarmEntry === 'entry2' ? '#fff' : colors.mutedForeground, fontSize: moderateScale(12), fontWeight: '700' }}>الثاني فقط</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setAlarmEntry('both')}
+                    style={{ flex: 1, paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center', backgroundColor: alarmEntry === 'both' ? '#ef4444' : colors.muted + '30' }}>
+                    <Text style={{ color: alarmEntry === 'both' ? '#fff' : colors.mutedForeground, fontSize: moderateScale(12), fontWeight: '700' }}>كلاهما</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
             )}
           </View>
         )}

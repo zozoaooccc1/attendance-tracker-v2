@@ -7,6 +7,16 @@ export interface ChangelogItem {
 
 const changelog: ChangelogItem[] = [
   {
+    version: '3.7.8',
+    title: 'إصلاح اختيار الشفت في التنبيهات',
+    date: '2026-06-18',
+    items: [
+      { type: 'fix', text: '🚨 إضافة زر اختيار نوع الدوام (شفت واحد/شفتين) داخل صفحة التنبيهات' },
+      { type: 'fix', text: '✅ أزرار اختيار الشفت (الأول/الثاني/كلاهما) تظهر داخل صفحة التنبيهات مباشرة' },
+      { type: 'fix', text: '✅ التنبيهات أصبحت مستقلة عن إعدادات الصفحة الرئيسية' },
+    ],
+  },
+  {
     version: '3.7.7',
     title: 'إصلاح شامل للتنبيهات + نظام تحديثات جديد',
     date: '2026-06-18',
@@ -260,4 +270,4 @@ export function getLatestChangelog(): ChangelogItem | null {
   return changelog[0] ?? null;
 }
 
-export const CURRENT_VERSION = '3.7.7';
+export const CURRENT_VERSION = '3.7.8';
