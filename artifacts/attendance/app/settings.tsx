@@ -165,7 +165,7 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     AsyncStorage.getItem(NOTIF_KEY).then(v => {
-      if (v) { try { const s = JSON.parse(v); setNotifEnabled(s.enabled ?? false); setNotifShift(s.shift ?? 'single'); } catch {} }
+      if (v) { try { const s = JSON.parse(v); setNotifEnabled(s.enabled ?? false); setNotifShift(s.shift ?? 'single'); if (s.alarmEntry) setAlarmEntry(s.alarmEntry); } catch {} }
     });
     AsyncStorage.getItem(BIOMETRIC_KEY).then(v => setBiometricEnabled(v === '1'));
     AsyncStorage.getItem(AUTO_DELETE_KEY).then(v => { if (v) setAutoDeleteMonths(Number(v)); });
@@ -360,7 +360,7 @@ export default function SettingsScreen() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await AsyncStorage.setItem(NOTIF_KEY, JSON.stringify({ enabled: notifEnabled, shift: notifShift }));
+      await AsyncStorage.setItem(NOTIF_KEY, JSON.stringify({ enabled: notifEnabled, shift: notifShift, alarmEntry: alarmEntry }));
       if (notifEnabled) {
         if (alarmBeforeShift) {
           // المنبّه الصاخب: إشعار كل 5 ثوانٍ قبل 15 دقيقة من الدوام
@@ -588,7 +588,7 @@ export default function SettingsScreen() {
               <View style={[{ backgroundColor: '#ef444410', marginHorizontal: moderateScale(14), marginBottom: moderateScale(10), borderRadius: moderateScale(10), padding: moderateScale(10), flexDirection: 'row', alignItems: 'flex-start', gap: moderateScale(8) }]}>
                 <Ionicons name="warning-outline" size={moderateScale(16)} color="#ef4444" style={{ marginTop: 1 }} />
                 <Text style={[styles.rowSub, { color: '#ef4444', flex: 1, lineHeight: moderateScale(18) }]}>
-                  سيُرسل منبّه مزعج جداً كل 60 ثانية طوال 15 دقيقة قبل موعد الدخول.{'\n'}
+                  سيُرسل منبّه مزعج جداً كل 30 ثانية طوال 15 دقيقة قبل موعد الدخول.{'\n'}
                   لا يمكن إيقافه إلا من هذه الإعدادات.
                 </Text>
               </View>

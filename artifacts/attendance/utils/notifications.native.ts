@@ -88,7 +88,7 @@ async function scheduleAlarmWindowForDate(
   // So we cap DAYS to 2 (15 × 2 × 2 = 60, still over) OR use 1 day for double shift.
   // Actually Android limit is per-app and dynamic; we keep 60s + 3 days = 45/90 max.
   // iOS: 120s intervals (7 per window) — stays under 64 limit
-  const INTERVAL_S     = Platform.OS === 'android' ? 60 : 120;
+  const INTERVAL_S     = Platform.OS === 'android' ? 30 : 120;
   const WINDOW_SECONDS = 15 * 60; // 15 minutes
 
   const count = Math.floor(WINDOW_SECONDS / INTERVAL_S);
@@ -195,9 +195,7 @@ export async function scheduleAlarmBurst(
     //   - Single shift × 3 days = 45 notifs ✓ (under 50)
     //   - Double shift × 2 days × 1 entry = 30 notifs ✓ (اختياري لشفت واحد)
     //   - Double shift × 2 days × 2 entries = 60 notifs (كلا الشفتين)
-    const DAYS = Platform.OS === 'android'
-      ? (shiftType === 'single' ? 3 : 2)
-      : 4;
+    const DAYS = Platform.OS === 'android' ? 1 : 4;
 
     for (let dayOffset = 0; dayOffset < DAYS; dayOffset++) {
       const targetDate = new Date(
