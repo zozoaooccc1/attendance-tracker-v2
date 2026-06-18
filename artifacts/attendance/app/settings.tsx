@@ -139,6 +139,8 @@ export default function SettingsScreen() {
 
   const [notifEnabled,        setNotifEnabled]        = useState(false);
   const [notifShift,          setNotifShift]           = useState<ShiftType>('single');
+  // v3.7.4: اختيار الشفت للمنبّه — entry1, entry2, or both
+  const [alarmEntry,           setAlarmEntry]           = useState<'entry1' | 'entry2' | 'both'>('both');
   const [saving,              setSaving]               = useState(false);
   const [testingSend,         setTestingSend]          = useState(false);
   const [biometricEnabled,    setBiometricEnabled]     = useState(false);
@@ -362,7 +364,7 @@ export default function SettingsScreen() {
       if (notifEnabled) {
         if (alarmBeforeShift) {
           // المنبّه الصاخب: إشعار كل 5 ثوانٍ قبل 15 دقيقة من الدوام
-          await scheduleAlarmBurst(notifShift);
+          await scheduleAlarmBurst(notifShift, notifShift === 'double' ? alarmEntry : 'both');
           Alert.alert('تم حفظ الإعدادات ✅', 'المنبّه الصاخب مفعّل — سيتكرر الإشعار كل 5 ثوانٍ قبل 15 دقيقة من الدوام', [{ text: 'حسناً' }]);
         } else {
           if (notifShift === 'single') await scheduleSingleShiftReminders(earlyReminder ? 5 : 0);
@@ -586,9 +588,31 @@ export default function SettingsScreen() {
               <View style={[{ backgroundColor: '#ef444410', marginHorizontal: moderateScale(14), marginBottom: moderateScale(10), borderRadius: moderateScale(10), padding: moderateScale(10), flexDirection: 'row', alignItems: 'flex-start', gap: moderateScale(8) }]}>
                 <Ionicons name="warning-outline" size={moderateScale(16)} color="#ef4444" style={{ marginTop: 1 }} />
                 <Text style={[styles.rowSub, { color: '#ef4444', flex: 1, lineHeight: moderateScale(18) }]}>
-                  سيُرسل إشعار صاخب كل 5 ثوانٍ طوال 15 دقيقة قبل موعد الدخول.{'\n'}
+                  سيُرسل منبّه مزعج جداً كل 60 ثانية طوال 15 دقيقة قبل موعد الدخول.{'\n'}
                   لا يمكن إيقافه إلا من هذه الإعدادات.
                 </Text>
+              </View>
+            )}
+            {alarmBeforeShift && notifShift === 'double' && (
+              <View style={[{ marginHorizontal: moderateScale(14), marginBottom: moderateScale(10), flexDirection: 'row', gap: moderateScale(8) }]}>
+                <Text style={[styles.rowSub, { color: colors.mutedForeground, marginBottom: moderateScale(6) }]}>المنبّه للشفت:</Text>
+                <View style={{ flexDirection: 'row', gap: moderateScale(6), flex: 1 }}>
+                  <TouchableOpacity
+                    onPress={() => setAlarmEntry('entry1')}
+                    style={{ flex: 1, paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center', backgroundColor: alarmEntry === 'entry1' ? '#ef4444' : colors.muted + '30' }}>
+                    <Text style={{ color: alarmEntry === 'entry1' ? '#fff' : colors.mutedForeground, fontSize: moderateScale(12), fontWeight: '700' }}>الأول فقط</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setAlarmEntry('entry2')}
+                    style={{ flex: 1, paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center', backgroundColor: alarmEntry === 'entry2' ? '#ef4444' : colors.muted + '30' }}>
+                    <Text style={{ color: alarmEntry === 'entry2' ? '#fff' : colors.mutedForeground, fontSize: moderateScale(12), fontWeight: '700' }}>الثاني فقط</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setAlarmEntry('both')}
+                    style={{ flex: 1, paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center', backgroundColor: alarmEntry === 'both' ? '#ef4444' : colors.muted + '30' }}>
+                    <Text style={{ color: alarmEntry === 'both' ? '#fff' : colors.mutedForeground, fontSize: moderateScale(12), fontWeight: '700' }}>كلاهما</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
             <View style={[styles.rowExpand, { borderTopColor: colors.border }]}>

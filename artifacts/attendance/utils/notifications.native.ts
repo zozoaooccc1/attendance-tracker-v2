@@ -147,9 +147,17 @@ async function scheduleAlarmWindowForDate(
               channelId: alarmChannel,
               priority: Notifications.AndroidNotificationPriority.HIGH,
               color: remainingMinutes <= 2 ? '#ff0000' : remainingMinutes <= 5 ? '#ff6600' : '#3b82f6',
-              vibrate: [0, 1000, 200, 1000],
+              // v3.7.4: منبّه مزعج بدرجة قوية — اهتزاز متواصل وأضواء
+              vibrate: remainingMinutes <= 2
+                ? [0, 1500, 100, 1500, 100, 1500, 100, 1500]  // اهتزاز أقوى في آخر دقيقتين
+                : remainingMinutes <= 5
+                ? [0, 1200, 200, 1200, 200, 1200]  // اهتزاز قوي في آخر 5 دقائق
+                : [0, 1000, 200, 1000],  // اهتزاز عادي
               lights: true,
-              lightColor: remainingMinutes <= 2 ? '#ff0000' : '#3b82f6',
+              lightColor: remainingMinutes <= 2 ? '#ff0000' : remainingMinutes <= 5 ? '#ff6600' : '#3b82f6',
+              sticky: remainingMinutes <= 2,  // يبقى على الشاشة في آخر دقيقتين
+              ongoing: remainingMinutes <= 2,  // لا يمكن إزالته في آخر دقيقتين
+              autoCancel: remainingMinutes > 2,
             }
           } : {}),
         },
@@ -169,9 +177,11 @@ async function scheduleAlarmWindowForDate(
 }
 
 // ── PUBLIC: schedule aggressive alarm burst before shift entry ────────────────
-// Schedules for the next 7 days (Android) / 4 days (iOS) so alarms repeat daily
+// v3.7.4: المنبّه المزعج القوي + اختياري لكل شفت على حدة
+// shiftEntry: 'entry1' | 'entry2' | 'both' — يحدد أي شفت يفعّل له المنبّه
 export async function scheduleAlarmBurst(
   shiftType: 'single' | 'double',
+  shiftEntry: 'entry1' | 'entry2' | 'both' = 'both',
 ): Promise<void> {
   if (Platform.OS === 'web') return;
   try {
@@ -180,11 +190,11 @@ export async function scheduleAlarmBurst(
     await cancelAllAttendanceReminders();
 
     const now = new Date();
-    // SAFETY (v3.6.6): Cap days to keep total scheduled notifications under Android's ~50 limit.
+    // SAFETY: Cap days to keep total scheduled notifications under Android's ~50 limit.
     // 60s interval × 15-min window = 15 notifs per entry per day.
     //   - Single shift × 3 days = 45 notifs ✓ (under 50)
-    //   - Double shift × 2 days × 2 entries = 60 notifs — slightly over but Android usually tolerates.
-    // Use DAYS=3 for single, DAYS=2 for double to be safe.
+    //   - Double shift × 2 days × 1 entry = 30 notifs ✓ (اختياري لشفت واحد)
+    //   - Double shift × 2 days × 2 entries = 60 notifs (كلا الشفتين)
     const DAYS = Platform.OS === 'android'
       ? (shiftType === 'single' ? 3 : 2)
       : 4;
@@ -198,9 +208,13 @@ export async function scheduleAlarmBurst(
         // Single shift entry: 12:00
         await scheduleAlarmWindowForDate(targetDate, 12, 0, 'موعد بصمة الدخول');
       } else {
-        // Double shift: entry1 09:00, entry2 16:00
-        await scheduleAlarmWindowForDate(targetDate, 9,  0, 'دخول الشفت الأول');
-        await scheduleAlarmWindowForDate(targetDate, 16, 0, 'دخول الشفت الثاني');
+        // Double shift: schedule only for the selected shift(s)
+        if (shiftEntry === 'entry1' || shiftEntry === 'both') {
+          await scheduleAlarmWindowForDate(targetDate, 9,  0, 'دخول الشفت الأول');
+        }
+        if (shiftEntry === 'entry2' || shiftEntry === 'both') {
+          await scheduleAlarmWindowForDate(targetDate, 16, 0, 'دخول الشفت الثاني');
+        }
       }
     }
   } catch (err) {
