@@ -7,6 +7,19 @@ export interface ChangelogItem {
 
 const changelog: ChangelogItem[] = [
   {
+    version: '3.7.7',
+    title: 'إصلاح شامل للتنبيهات + نظام تحديثات جديد',
+    date: '2026-06-18',
+    items: [
+      { type: 'fix',     text: '🚨 إصلاح: المنبّه المزعج لم يكن يظهر في الإعدادات (كان مخفياً داخل notifEnabled)' },
+      { type: 'fix',     text: '🚨 إصلاح: أزرار اختيار الشفت لم تكن تظهر (نفس السبب)' },
+      { type: 'new',     text: '✅ المنبّه المزعج مرئي دائماً في الإعدادات' },
+      { type: 'new',     text: '✅ اختيار الشفت (الأول/الثاني/كلاهما) مرئي دائماً عند تفعيل المنبّه' },
+      { type: 'new',     text: '✅ نظام تحديثات جديد يعتمد على JSON من GitHub (سريع وموثوق)' },
+      { type: 'fix',     text: '✅ rescheduleFromSettings: إعادة جدولة تلقائية عند بدء التطبيق' },
+    ],
+  },
+  {
     version: '3.7.6',
     title: 'إصلاح التنبيهات + إعادة جدولة تلقائية',
     date: '2026-06-18',
@@ -247,4 +260,4 @@ export function getLatestChangelog(): ChangelogItem | null {
   return changelog[0] ?? null;
 }
 
-export const CURRENT_VERSION = '3.7.6';
+export const CURRENT_VERSION = '3.7.7';

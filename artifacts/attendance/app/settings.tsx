@@ -544,6 +544,7 @@ export default function SettingsScreen() {
       </Text>
       <View style={[styles.groupCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
 
+        {/* تفعيل التنبيهات */}
         <View style={styles.settingsRow}>
           <View style={[styles.rowIcon, { backgroundColor: '#f9731620' }]}>
             <Ionicons name="notifications-outline" size={moderateScale(18)} color="#f97316" />
@@ -554,6 +555,7 @@ export default function SettingsScreen() {
             thumbColor={notifEnabled ? colors.primaryForeground : colors.mutedForeground} />
         </View>
 
+        {/* تذكير 5 دقائق مبكراً — داخل notifEnabled */}
         {notifEnabled && (
           <>
             <RowSep colors={colors} />
@@ -569,101 +571,115 @@ export default function SettingsScreen() {
                 trackColor={{ false: colors.muted, true: colors.primary }}
                 thumbColor={earlyReminder ? colors.primaryForeground : colors.mutedForeground} />
             </View>
-            <RowSep colors={colors} />
-            {/* ── المنبّه الصاخب ─────────────────────────────────────────── */}
-            <View style={styles.settingsRow}>
-              <View style={[styles.rowIcon, { backgroundColor: '#ef444420' }]}>
-                <Ionicons name="alarm-outline" size={moderateScale(18)} color="#ef4444" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.rowTitle, { color: colors.foreground }]}>المنبّه الصاخب</Text>
-                <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>
-                  ينبّه قبل كل دخول (شفت واحد + شفتين) — فقط الدخول
-                </Text>
-              </View>
-              <Switch value={alarmBeforeShift} onValueChange={setAlarmBeforeShift}
-                trackColor={{ false: colors.muted, true: '#ef4444' }}
-                thumbColor={alarmBeforeShift ? '#fff' : colors.mutedForeground} />
-            </View>
-            {alarmBeforeShift && (
-              <View style={[{ backgroundColor: '#ef444410', marginHorizontal: moderateScale(14), marginBottom: moderateScale(10), borderRadius: moderateScale(10), padding: moderateScale(10), flexDirection: 'row', alignItems: 'flex-start', gap: moderateScale(8) }]}>
-                <Ionicons name="warning-outline" size={moderateScale(16)} color="#ef4444" style={{ marginTop: 1 }} />
-                <Text style={[styles.rowSub, { color: '#ef4444', flex: 1, lineHeight: moderateScale(18) }]}>
-                  سيُرسل منبّه مزعج جداً كل 30 ثانية طوال 15 دقيقة قبل موعد الدخول.{'\n'}
-                  لا يمكن إيقافه إلا من هذه الإعدادات.{'\n'}
-                  {'⚠️ للشفتين: اختر الشفت أدناه لتجنب الإزعاج للشفت الآخر'}
-                </Text>
-              </View>
-            )}
-            {alarmBeforeShift && notifShift === 'double' && (
-              <View style={[{ marginHorizontal: moderateScale(14), marginBottom: moderateScale(10), flexDirection: 'row', gap: moderateScale(8) }]}>
-                <Text style={[styles.rowSub, { color: colors.mutedForeground, marginBottom: moderateScale(6) }]}>المنبّه للشفت:</Text>
-                <View style={{ flexDirection: 'row', gap: moderateScale(6), flex: 1 }}>
-                  <TouchableOpacity
-                    onPress={() => setAlarmEntry('entry1')}
-                    style={{ flex: 1, paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center', backgroundColor: alarmEntry === 'entry1' ? '#ef4444' : colors.muted + '30' }}>
-                    <Text style={{ color: alarmEntry === 'entry1' ? '#fff' : colors.mutedForeground, fontSize: moderateScale(12), fontWeight: '700' }}>الأول فقط</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => setAlarmEntry('entry2')}
-                    style={{ flex: 1, paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center', backgroundColor: alarmEntry === 'entry2' ? '#ef4444' : colors.muted + '30' }}>
-                    <Text style={{ color: alarmEntry === 'entry2' ? '#fff' : colors.mutedForeground, fontSize: moderateScale(12), fontWeight: '700' }}>الثاني فقط</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => setAlarmEntry('both')}
-                    style={{ flex: 1, paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center', backgroundColor: alarmEntry === 'both' ? '#ef4444' : colors.muted + '30' }}>
-                    <Text style={{ color: alarmEntry === 'both' ? '#fff' : colors.mutedForeground, fontSize: moderateScale(12), fontWeight: '700' }}>كلاهما</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-            <View style={[styles.rowExpand, { borderTopColor: colors.border }]}>
-              <View style={[styles.scheduleBox, { borderColor: colors.border }]}>
-                {(notifShift === 'single'
-                  ? [{ time: '11:45 — 12:00 م', label: 'موعد بصمة الدخول', icon: 'alarm-outline' as const }]
-                  : [
-                      { time: '8:45 — 9:00 ص',  label: 'دخول الشفت الأول',   icon: 'alarm-outline' as const },
-                      { time: '3:45 — 4:00 م',   label: 'دخول الشفت الثاني', icon: 'alarm-outline' as const },
-                    ]
-                ).map((s, i, arr) => (
-                  <View key={i} style={[styles.schedItem, i < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
-                    <View style={[styles.schedIcon, { backgroundColor: alarmBeforeShift ? '#ef444415' : colors.muted + '30' }]}>
-                      <Ionicons name={s.icon} size={moderateScale(14)} color={alarmBeforeShift ? '#ef4444' : colors.mutedForeground} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.schedTime, { color: colors.foreground, fontFamily: 'Inter_700Bold' }]}>{s.time}</Text>
-                      <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>{s.label}</Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-              <View style={{ flexDirection: 'row', gap: moderateScale(8) }}>
-                <TouchableOpacity
-                  style={[styles.actionBtn, { flex: 1, borderColor: colors.primary + '50', backgroundColor: colors.primary + '12' }, testingSend && { opacity: 0.6 }]}
-                  onPress={handleTestNotification} disabled={testingSend}
-                >
-                  {testingSend
-                    ? <ActivityIndicator size="small" color={colors.primary} />
-                    : <Ionicons name="paper-plane-outline" size={moderateScale(16)} color={colors.primary} />}
-                  <Text style={[styles.actionBtnText, { color: colors.primary }]}>
-                    {testingSend ? t.settings.sendingNotif : t.settings.testNotif}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.actionBtn, { flex: 1, backgroundColor: colors.primary, borderColor: colors.primary }, saving && { opacity: 0.7 }]}
-                  onPress={handleSave} disabled={saving}
-                >
-                  {saving
-                    ? <ActivityIndicator color={colors.primaryForeground} size="small" />
-                    : <Ionicons name="checkmark-circle" size={moderateScale(16)} color={colors.primaryForeground} />}
-                  <Text style={[styles.actionBtnText, { color: colors.primaryForeground, fontFamily: 'Inter_700Bold' }]}>
-                    {t.settings.saveNotifSettings}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
           </>
         )}
+
+        {/* ── المنبّه المزعج — مرئي دائماً ────────────────────────── */}
+        <RowSep colors={colors} />
+        <View style={styles.settingsRow}>
+          <View style={[styles.rowIcon, { backgroundColor: '#ef444420' }]}>
+            <Ionicons name="alarm-outline" size={moderateScale(18)} color="#ef4444" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.rowTitle, { color: colors.foreground }]}>🚨 المنبّه المزعج</Text>
+            <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>
+              منبّه قوي كل 30 ثانية قبل 15 دقيقة من الدخول
+            </Text>
+          </View>
+          <Switch value={alarmBeforeShift} onValueChange={setAlarmBeforeShift}
+            trackColor={{ false: colors.muted, true: '#ef4444' }}
+            thumbColor={alarmBeforeShift ? '#fff' : colors.mutedForeground} />
+        </View>
+
+        {/* تحذير المنبّه المزعج */}
+        {alarmBeforeShift && (
+          <View style={[{ backgroundColor: '#ef444410', marginHorizontal: moderateScale(14), marginBottom: moderateScale(10), borderRadius: moderateScale(10), padding: moderateScale(10), flexDirection: 'row', alignItems: 'flex-start', gap: moderateScale(8) }]}>
+            <Ionicons name="warning-outline" size={moderateScale(16)} color="#ef4444" style={{ marginTop: 1 }} />
+            <Text style={[styles.rowSub, { color: '#ef4444', flex: 1, lineHeight: moderateScale(18) }]}>
+              سيُرسل منبّه مزعج جداً كل 30 ثانية طوال 15 دقيقة قبل موعد الدخول.{'\n'}
+              لا يمكن إيقافه إلا من هذه الإعدادات.
+            </Text>
+          </View>
+        )}
+
+        {/* اختيار الشفت للمنبّه — يظهر دائماً عند تفعيل المنبّه */}
+        {alarmBeforeShift && (
+          <View style={[{ marginHorizontal: moderateScale(14), marginBottom: moderateScale(10) }]}>
+            <Text style={[styles.rowSub, { color: colors.mutedForeground, marginBottom: moderateScale(6) }]}>
+              {notifShift === 'double' ? 'المنبّه للشفت:' : 'المنبّه للدخول:'}
+            </Text>
+            {notifShift === 'double' ? (
+              <View style={{ flexDirection: 'row', gap: moderateScale(6) }}>
+                <TouchableOpacity
+                  onPress={() => setAlarmEntry('entry1')}
+                  style={{ flex: 1, paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center', backgroundColor: alarmEntry === 'entry1' ? '#ef4444' : colors.muted + '30' }}>
+                  <Text style={{ color: alarmEntry === 'entry1' ? '#fff' : colors.mutedForeground, fontSize: moderateScale(12), fontWeight: '700' }}>الأول فقط</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setAlarmEntry('entry2')}
+                  style={{ flex: 1, paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center', backgroundColor: alarmEntry === 'entry2' ? '#ef4444' : colors.muted + '30' }}>
+                  <Text style={{ color: alarmEntry === 'entry2' ? '#fff' : colors.mutedForeground, fontSize: moderateScale(12), fontWeight: '700' }}>الثاني فقط</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setAlarmEntry('both')}
+                  style={{ flex: 1, paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center', backgroundColor: alarmEntry === 'both' ? '#ef4444' : colors.muted + '30' }}>
+                  <Text style={{ color: alarmEntry === 'both' ? '#fff' : colors.mutedForeground, fontSize: moderateScale(12), fontWeight: '700' }}>كلاهما</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={{ backgroundColor: colors.muted + '20', paddingVertical: moderateScale(8), borderRadius: moderateScale(8), alignItems: 'center' }}>
+                <Text style={{ color: colors.mutedForeground, fontSize: moderateScale(12) }}>شفت واحد — المنبّه يعمل للدخول فقط</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* الجدول + الأزرار — مرئية دائماً */}
+        <View style={[styles.rowExpand, { borderTopColor: colors.border }]}>
+          <View style={[styles.scheduleBox, { borderColor: colors.border }]}>
+            {(notifShift === 'single'
+              ? [{ time: '11:45 — 12:00 م', label: 'موعد بصمة الدخول', icon: 'alarm-outline' as const }]
+              : [
+                  { time: '8:45 — 9:00 ص',  label: 'دخول الشفت الأول',   icon: 'alarm-outline' as const },
+                  { time: '3:45 — 4:00 م',   label: 'دخول الشفت الثاني', icon: 'alarm-outline' as const },
+                ]
+            ).map((s, i, arr) => (
+              <View key={i} style={[styles.schedItem, i < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+                <View style={[styles.schedIcon, { backgroundColor: alarmBeforeShift ? '#ef444415' : colors.muted + '30' }]}>
+                  <Ionicons name={s.icon} size={moderateScale(14)} color={alarmBeforeShift ? '#ef4444' : colors.mutedForeground} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.schedTime, { color: colors.foreground, fontFamily: 'Inter_700Bold' }]}>{s.time}</Text>
+                  <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>{s.label}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+          <View style={{ flexDirection: 'row', gap: moderateScale(8) }}>
+            <TouchableOpacity
+              style={[styles.actionBtn, { flex: 1, borderColor: colors.primary + '50', backgroundColor: colors.primary + '12' }, testingSend && { opacity: 0.6 }]}
+              onPress={handleTestNotification} disabled={testingSend}
+            >
+              {testingSend
+                ? <ActivityIndicator size="small" color={colors.primary} />
+                : <Ionicons name="paper-plane-outline" size={moderateScale(16)} color={colors.primary} />}
+              <Text style={[styles.actionBtnText, { color: colors.primary }]}>
+                {testingSend ? t.settings.sendingNotif : t.settings.testNotif}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionBtn, { flex: 1, backgroundColor: colors.primary, borderColor: colors.primary }, saving && { opacity: 0.7 }]}
+              onPress={handleSave} disabled={saving}
+            >
+              {saving
+                ? <ActivityIndicator color={colors.primaryForeground} size="small" />
+                : <Ionicons name="checkmark-circle" size={moderateScale(16)} color={colors.primaryForeground} />}
+              <Text style={[styles.actionBtnText, { color: colors.primaryForeground, fontFamily: 'Inter_700Bold' }]}>
+                {t.settings.saveNotifSettings}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
       {/* ══════════════ GROUP: الأمان ══════════════ */}

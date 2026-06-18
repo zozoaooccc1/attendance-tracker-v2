@@ -1,20 +1,14 @@
 /**
- * easUpdateChecker.ts
- * ───────────────────
- * يفحص EAS GraphQL API للتحقق من وجود بناء APK أحدث.
- *
- * آلية العمل:
- * 1. يقرأ التوكن من Constants.expoConfig.extra.easUpdateToken
- *    (يُضمَّن تلقائياً وقت البناء من EAS_UPDATE_TOKEN)
- * 2. يستعلم عن آخر بناء مكتمل على EAS
- * 3. يقارن الإصدار بالإصدار الحالي
- * 4. يُرجع معلومات التحديث إن وُجد إصدار أحدث
+ * easUpdateChecker.ts — v3.7.7
+ * ───────────────────────────────
+ * نظام تحديثات بسيط يعتمد على ملف JSON على GitHub.
+ * لا يحتاج توكن أو مصادقة — سريع وموثوق.
  */
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Linking, Platform } from 'react-native';
 
-const EAS_API    = 'https://api.expo.dev/graphql';
-const PROJECT_ID = '6c86f18d-eec0-489a-b4c8-9d2b8d678606';
+const VERSION_CHECK_URL = 'https://raw.githubusercontent.com/zozoaooccc1/attendance-tracker-v2/main/latest-version.json';
 const SNOOZE_KEY = 'apk_update_snoozed_v_';
 
 export interface AppUpdateInfo {
@@ -39,84 +33,39 @@ function isNewer(remote: string, current: string): boolean {
   return false;
 }
 
-function formatArabicDate(isoStr: string): string {
-  try {
-    const d = new Date(isoStr);
-    return d.toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
-  } catch {
-    return '';
-  }
-}
-
 export async function checkForAppUpdate(force = false): Promise<AppUpdateInfo | null> {
   try {
     const currentVersion = Constants.expoConfig?.version ?? '0.0.0';
-    const token: string  = (Constants.expoConfig?.extra?.easUpdateToken as string) ?? '';
-
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const query = `{
-      app {
-        byId(appId: "${PROJECT_ID}") {
-          builds(limit: 1, offset: 0, platform: ANDROID, status: FINISHED) {
-            id
-            appVersion
-            appBuildVersion
-            createdAt
-            artifacts {
-              applicationArchiveUrl
-            }
-          }
-        }
-      }
-    }`;
 
     const res = await Promise.race<Response | 'timeout'>([
-      fetch(EAS_API, { method: 'POST', headers, body: JSON.stringify({ query }) }),
+      fetch(VERSION_CHECK_URL, { cache: 'no-store' as RequestCache }),
       new Promise<'timeout'>(r => setTimeout(() => r('timeout'), 10_000)),
     ]);
 
     if (res === 'timeout' || !res.ok) return null;
 
-    const json = await res.json() as {
-      data?: {
-        app?: {
-          byId?: {
-            builds?: Array<{
-              id: string;
-              appVersion: string;
-              appBuildVersion: string;
-              createdAt: string;
-              artifacts?: { applicationArchiveUrl?: string };
-            }>;
-          };
-        };
-      };
-      errors?: unknown[];
+    const data = await res.json() as {
+      version?: string;
+      versionCode?: number;
+      downloadUrl?: string;
+      releaseNotes?: string;
+      minRequiredVersion?: string;
+      publishedAt?: string;
     };
 
-    if (json.errors || !json.data?.app?.byId?.builds?.length) return null;
+    if (!data.version || !data.downloadUrl) return null;
+    if (!isNewer(data.version, currentVersion)) return null;
 
-    const build = json.data.app.byId.builds[0];
-    const downloadUrl = build.artifacts?.applicationArchiveUrl ?? '';
-
-    if (!build.appVersion || !downloadUrl) return null;
-    if (!isNewer(build.appVersion, currentVersion)) return null;
-
-    // هل المستخدم أجّل هذا الإصدار؟ (يُتجاهل عند الفحص اليدوي)
+    // هل المستخدم أجّل هذا الإصدار؟
     if (!force) {
-      const snoozed = await AsyncStorage.getItem(SNOOZE_KEY + build.appVersion);
+      const snoozed = await AsyncStorage.getItem(SNOOZE_KEY + data.version);
       if (snoozed) return null;
     }
 
-    const dateStr = build.createdAt ? formatArabicDate(build.createdAt) : '';
-    const notes   = dateStr ? `صدر بتاريخ ${dateStr}` : 'إصدار جديد متاح';
-
     return {
-      version:     build.appVersion,
-      notes,
-      downloadUrl,
+      version: data.version,
+      notes: data.releaseNotes || 'إصدار جديد متاح',
+      downloadUrl: data.downloadUrl,
     };
   } catch {
     return null;
@@ -125,4 +74,12 @@ export async function checkForAppUpdate(force = false): Promise<AppUpdateInfo | 
 
 export async function snoozeUpdate(version: string): Promise<void> {
   try { await AsyncStorage.setItem(SNOOZE_KEY + version, '1'); } catch {}
+}
+
+export async function downloadAndInstall(update: AppUpdateInfo): Promise<void> {
+  if (Platform.OS === 'web') {
+    try { await Linking.openURL(update.downloadUrl); } catch {}
+    return;
+  }
+  try { await Linking.openURL(update.downloadUrl); } catch {}
 }
