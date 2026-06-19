@@ -1,8 +1,8 @@
 {
-  "version": "3.7.8",
-  "versionCode": 83,
+  "version": "3.7.9",
+  "versionCode": 84,
   "downloadUrl": "https://expo.dev/artifacts/eas/ar81VztDKe9msvLjHng46D1KEA4kGLGSx504nloFvXg.apk",
-  "releaseNotes": "إصلاح اختيار الشفت في التنبيهات + المنبّه المزعج + نظام تحديثات جديد",
+  "releaseNotes": "مهلة ساعتين بعد منتصف الليل + إصلاح اختيار الشفت",
   "minRequiredVersion": "3.6.5",
   "publishedAt": "2026-06-18T17:42:00Z"
 }

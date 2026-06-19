@@ -98,6 +98,17 @@ export default function TodayScreen() {
   const { todayRecords, shiftType, setShiftType, refreshToday, allDates, getRecordForMonth } = useAttendance();
   const { formatTime, fontMultiplier, t } = useSettings();
   const [now, setNow] = useState(new Date());
+
+  // v3.7.9: مهلة ساعتين بعد منتصف الليل — عرض تاريخ اليوم السابق حتى 2:00 ص
+  const displayDate = useMemo(() => {
+    const d = new Date();
+    const hour = d.getHours();
+    if (hour < 2) {
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
+    }
+    return d;
+  }, [now]);
+
   const [countdown, setCountdown] = useState('');
   const [entryCountdown, setEntryCountdown] = useState('');
   const [entryTargetLabel, setEntryTargetLabel] = useState('');
@@ -127,7 +138,7 @@ export default function TodayScreen() {
     setNow(new Date());
   }, [refreshToday]));
 
-  const isFriday = isFridayDate(now);
+  const isFriday = isFridayDate(displayDate);
 
   useEffect(() => {
     if (isFriday && shiftType !== 'single') {
@@ -202,12 +213,12 @@ export default function TodayScreen() {
         <View style={[styles.dateBadge, {
           backgroundColor: isFriday ? '#f59e0b' : colors.primary,
         }]}>
-          <Text style={[styles.dateNum, { color: '#fff' }]}>{now.getDate()}</Text>
+          <Text style={[styles.dateNum, { color: '#fff' }]}>{displayDate.getDate()}</Text>
         </View>
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: moderateScale(8) }}>
             <Text style={[styles.dayName, { color: colors.foreground, fontFamily: 'Inter_700Bold' }]}>
-              {t.days[now.getDay()]}
+              {t.days[displayDate.getDay()]}
             </Text>
             {isFriday && (
               <View style={[styles.fridayBadge, { backgroundColor: '#f59e0b20', borderColor: '#f59e0b50' }]}>
@@ -216,7 +227,7 @@ export default function TodayScreen() {
             )}
           </View>
           <Text style={[styles.fullDate, { color: colors.mutedForeground }]}>
-            {`${now.getDate()} ${t.months[now.getMonth()]} ${now.getFullYear()}`}
+            {`${displayDate.getDate()} ${t.months[displayDate.getMonth()]} ${displayDate.getFullYear()}`}
           </Text>
         </View>
         <View style={{ flexDirection: 'row', gap: moderateScale(8), alignItems: 'center' }}>

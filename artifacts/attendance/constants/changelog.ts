@@ -7,6 +7,16 @@ export interface ChangelogItem {
 
 const changelog: ChangelogItem[] = [
   {
+    version: '3.7.9',
+    title: 'مهلة ساعتين بعد منتصف الليل',
+    date: '2026-06-19',
+    items: [
+      { type: 'fix', text: '🚨 إصلاح: التطبيق كان ينتقل لليوم التالي فوراً عند 12:00 ص' },
+      { type: 'fix', text: '✅ إضافة مهلة ساعتين (12:00 ص — 2:00 ص) لتسجيل بصمة الخروج' },
+      { type: 'fix', text: '✅ التاريخ المعروض والسجلات تتبع اليوم السابق حتى 2:00 ص' },
+    ],
+  },
+  {
     version: '3.7.8',
     title: 'إصلاح اختيار الشفت في التنبيهات',
     date: '2026-06-18',
@@ -270,4 +280,4 @@ export function getLatestChangelog(): ChangelogItem | null {
   return changelog[0] ?? null;
 }
 
-export const CURRENT_VERSION = '3.7.8';
+export const CURRENT_VERSION = '3.7.9';

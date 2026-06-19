@@ -74,7 +74,13 @@ function fmtTime(d: Date): string {
 }
 
 export function fmtDate(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  // v3.7.9: مهلة ساعتين بعد منتصف الليل — التاريخ يُحسب لليوم السابق حتى 2:00 ص
+  const hour = d.getHours();
+  let dateToUse = d;
+  if (hour < 2) {
+    dateToUse = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
+  }
+  return `${dateToUse.getFullYear()}-${String(dateToUse.getMonth() + 1).padStart(2, '0')}-${String(dateToUse.getDate()).padStart(2, '0')}`;
 }
 
 export interface CompanyPeriod {

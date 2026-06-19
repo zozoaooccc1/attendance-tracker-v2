@@ -35,8 +35,14 @@ interface AttendanceContextType {
 const AttendanceContext = createContext<AttendanceContextType | null>(null);
 
 function todayStr(): string {
-  // استخدام التاريخ المحلي للجهاز مع ضمان تنسيق ثابت
+  // v3.7.9: مهلة ساعتين بعد منتصف الليل — السجلات تُسجل لليوم السابق حتى 2:00 ص
   const d = new Date();
+  const hour = d.getHours();
+  // إذا كانت الساعة بين 00:00 و 02:00 (بعد منتصف الليل)، اعتبر التاريخ لليوم السابق
+  if (hour < 2) {
+    const yesterday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
+    return `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+  }
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
@@ -61,16 +67,24 @@ export function AttendanceProvider({ children }: { children: React.ReactNode }) 
     }
   }, []);
 
-  // تحديث الفترة والسجلات يومياً عند منتصف الليل
+  // تحديث الفترة والسجلات يومياً — لكن بعد مهلة الساعتين (2:00 ص بدلاً من 12:00 ص)
   useEffect(() => {
     const now = new Date();
-    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    const msUntilMidnight = tomorrow.getTime() - now.getTime();
+    const hour = now.getHours();
+    let nextSwitch: Date;
+    if (hour < 2) {
+      // نحن في مهلة منتصف الليل — التبديل التالي عند 2:00 ص
+      nextSwitch = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 2, 0, 0);
+    } else {
+      // التبديل التالي عند 2:00 ص في اليوم التالي
+      nextSwitch = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 2, 0, 0);
+    }
+    const msUntilSwitch = nextSwitch.getTime() - now.getTime();
     const timer = setTimeout(() => {
       setPeriodDate(new Date());
       loadTodayRecords();
       loadAllDates();
-    }, msUntilMidnight + 1000); // ثانية واحدة بعد منتصف الليل
+    }, msUntilSwitch + 1000); // ثانية واحدة بعد 2:00 ص
     return () => clearTimeout(timer);
   }, [periodDate]);
 
